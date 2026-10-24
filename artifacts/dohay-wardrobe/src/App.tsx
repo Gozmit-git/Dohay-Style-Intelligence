@@ -39,7 +39,7 @@ function AppShell({ children, currentPage }: { children: ReactNode; currentPage:
     { href: "/billing", label: "Plans", icon: CreditCard, key: "billing" },
     ...(owner.isOwner ? [{ href: "/admin", label: "Owner dashboard", icon: ShieldCheck, key: "admin" }] : []),
   ];
-  return <div className="app-frame">
+  return <div className={`app-frame ${currentPage === "chat" ? "chat-app-frame" : ""}`}>
     <aside className="side-rail">
       <Brand />
       <div className="sidebar-purpose"><span>STYLE, WITH CONTEXT</span><strong>Your clothes.<br />Your point of view.</strong></div>

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/react";
-import { ArrowUp, Camera, Check, LoaderCircle, MapPin, Plus, ShieldCheck, Sparkles, Square, Volume2, X } from "lucide-react";
+import { ArrowUp, Camera, Check, Ellipsis, LoaderCircle, MapPin, Plus, ShieldCheck, Sparkles, Square, Volume2, X } from "lucide-react";
 import type { CreateMvpUploadBodyContentType, MvpContext, MvpMessage, MvpOutfit, MvpProfileInput, MvpStylingContext } from "@workspace/api-client-react";
 import {
   getGetMvpProfileQueryKey,
@@ -167,6 +167,7 @@ export function ChatPage() {
   const picker = useRef<HTMLInputElement>(null);
   const selfiePicker = useRef<HTMLInputElement>(null);
   const conversationEnd = useRef<HTMLDivElement>(null);
+  const mobileActions = useRef<HTMLDetailsElement>(null);
   const previousThread = useRef<string | null>(null);
   const profilePrefilledThread = useRef<string | null>(null);
   const threads = threadsQuery.data ?? [];
@@ -224,6 +225,38 @@ export function ChatPage() {
     if (element) element.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length, sending, recommendation]);
 
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const root = document.documentElement;
+    let baselineHeight = viewport?.height ?? window.innerHeight;
+    let baselineWidth = viewport?.width ?? window.innerWidth;
+    const updateViewport = () => {
+      const height = viewport?.height ?? window.innerHeight;
+      const width = viewport?.width ?? window.innerWidth;
+      if (Math.abs(width - baselineWidth) > 80) {
+        baselineWidth = width;
+        baselineHeight = height;
+      }
+      const keyboardOpen = baselineHeight - height > 120;
+      if (!keyboardOpen) baselineHeight = height;
+      root.dataset.chatKeyboardOpen = String(keyboardOpen);
+      root.style.setProperty("--chat-viewport-height", `${Math.round(height)}px`);
+      root.style.setProperty("--chat-viewport-top", `${Math.round(viewport?.offsetTop ?? 0)}px`);
+    };
+    updateViewport();
+    viewport?.addEventListener("resize", updateViewport);
+    viewport?.addEventListener("scroll", updateViewport);
+    window.addEventListener("resize", updateViewport);
+    return () => {
+      viewport?.removeEventListener("resize", updateViewport);
+      viewport?.removeEventListener("scroll", updateViewport);
+      window.removeEventListener("resize", updateViewport);
+      delete root.dataset.chatKeyboardOpen;
+      root.style.removeProperty("--chat-viewport-height");
+      root.style.removeProperty("--chat-viewport-top");
+    };
+  }, []);
+
   useEffect(() => () => photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.preview)), []);
 
   const hasImageConsent = profile?.imageConsent === true;
@@ -237,6 +270,7 @@ export function ChatPage() {
   };
 
   const beginNewConversation = async () => {
+    mobileActions.current?.removeAttribute("open");
     setSendError("");
     try {
       const id = await createConversation();
@@ -251,6 +285,13 @@ export function ChatPage() {
     } catch {
       setSendError("A new conversation could not be started. Please try again.");
     }
+  };
+
+  const startQuickFitCheck = () => {
+    mobileActions.current?.removeAttribute("open");
+    setText("How does my outfit look? Give me a quick fit check.");
+    if (hasImageConsent) selfiePicker.current?.click();
+    else setConsentError("Enable photo uploads below, then take or choose your outfit selfie.");
   };
 
   const addFiles = (fileList: FileList | null) => {
@@ -476,17 +517,34 @@ export function ChatPage() {
           <h1>Let’s get dressed.</h1>
           <p>Take an outfit selfie. Get a quick, honest fit check.</p>
         </div>
-        <div className="chat-top-actions">
-          <button className="button button-small" type="button" disabled={isBusy} onClick={() => {
-            setText("How does my outfit look? Give me a quick fit check.");
-            if (hasImageConsent) selfiePicker.current?.click();
-            else setConsentError("Enable photo uploads below, then take or choose your outfit selfie.");
-          }}><Camera size={13} /> Quick fit check</button>
+        <div className="chat-top-actions chat-desktop-actions">
+          <button className="button button-small" type="button" disabled={isBusy} onClick={startQuickFitCheck}><Camera size={13} /> Quick fit check</button>
           {threads.length > 0 && <select className="thread-select" aria-label="Choose conversation" value={activeThreadId ?? ""} onChange={(event) => setActiveThreadId(event.target.value || null)}>
             {threads.map((thread) => <option value={thread.id} key={thread.id}>{thread.title || "Styling conversation"}</option>)}
           </select>}
           <button className="button button-quiet button-small" type="button" onClick={beginNewConversation} disabled={createThread.isPending}><Plus size={13} /> New chat</button>
           <button className={`button button-small ${showContext ? "button-soft" : ""}`} type="button" onClick={() => setShowContext((current) => !current)}><Sparkles size={13} /> Styling details</button>
+        </div>
+        <div className="chat-mobile-actions">
+          <button className="chat-mobile-fit" type="button" disabled={isBusy} onClick={startQuickFitCheck} aria-label="Start a quick outfit fit check" data-testid="button-mobile-fit-check">
+            <Camera size={17} /><span>Fit check</span>
+          </button>
+          <details className="chat-mobile-menu" ref={mobileActions}>
+            <summary aria-label="More chat actions" title="More chat actions" data-testid="button-mobile-chat-actions"><Ellipsis size={21} /></summary>
+            <div className="chat-mobile-menu-panel">
+              {threads.length > 0 && <select className="thread-select" aria-label="Choose conversation" value={activeThreadId ?? ""} onChange={(event) => {
+                setActiveThreadId(event.target.value || null);
+                mobileActions.current?.removeAttribute("open");
+              }} data-testid="select-mobile-conversation">
+                {threads.map((thread) => <option value={thread.id} key={thread.id}>{thread.title || "Styling conversation"}</option>)}
+              </select>}
+              <button className="button button-quiet button-small" type="button" onClick={() => void beginNewConversation()} disabled={createThread.isPending} data-testid="button-mobile-new-chat"><Plus size={15} /> New chat</button>
+              <button className={`button button-small ${showContext ? "button-soft" : ""}`} type="button" onClick={() => {
+                setShowContext((current) => !current);
+                mobileActions.current?.removeAttribute("open");
+              }} data-testid="button-mobile-styling-details"><Sparkles size={15} /> Styling details</button>
+            </div>
+          </details>
         </div>
       </header>
       <div className="conversation-scroll">
@@ -592,9 +650,13 @@ export function ChatPage() {
           <button type="button" className="text-button" onClick={() => { locationRequest.current++; setContextApplied(false); setContext(initialContext); setContextConfirmed(false); }}>Remove details</button>
         </div>}
         {!hasImageConsent && <div className="privacy-gate">
-          <div className="privacy-gate-copy"><strong><ShieldCheck size={14} /> Photos need your permission first.</strong>Text chat is ready now. Before any photo is uploaded, choose to allow DOHAY to process wardrobe images. You can change this in Profile.</div>
+          <div className="privacy-gate-copy">
+            <strong><ShieldCheck size={14} /> Photo access is optional.</strong>
+            <span className="privacy-gate-desktop-copy">Text chat is ready now. Before any photo is uploaded, choose to allow DOHAY to process wardrobe images. You can change this in Profile.</span>
+            <span className="privacy-gate-mobile-copy">Text chat works without photos. Allow access only when you want a selfie fit check.</span>
+          </div>
           {consentError && <div className="context-inline-error">{consentError}</div>}
-          <button type="button" className="button button-small" disabled={profileQuery.isLoading || uploadConsentBusy} onClick={authorizePhotoUploads}>{uploadConsentBusy ? "Saving…" : "I agree; enable photo uploads"}</button>
+          <button type="button" className="button button-small" disabled={profileQuery.isLoading || uploadConsentBusy} onClick={authorizePhotoUploads}>{uploadConsentBusy ? "Saving…" : "I agree; enable photos"}</button>
           <Link href="/profile" className="consent-profile-link">Review profile</Link>
         </div>}
         {sendError && <div className="chat-error">{sendError}<button type="button" className="text-retry" onClick={() => setSendError("")}>Dismiss</button></div>}
