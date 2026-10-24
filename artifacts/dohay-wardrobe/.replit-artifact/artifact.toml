@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "DOHAY Wardrobe"
+description = "A camera-first personal wardrobe app that analyzes clothing photos, lets users refine item details with a conversational stylist, and saves approved garments for outfit recommendations."
+version = "1.0.0"
+id = "artifacts/dohay-wardrobe"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20006
+
+[services.development]
+run = "pnpm --filter @workspace/dohay-wardrobe run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dohay-wardrobe", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/dohay-wardrobe/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20006"
+BASE_PATH = "/"
