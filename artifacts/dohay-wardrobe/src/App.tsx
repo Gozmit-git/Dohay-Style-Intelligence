@@ -49,7 +49,7 @@ function AppShell({ children, currentPage }: { children: ReactNode; currentPage:
         <button type="button" className="signout-link" onClick={() => void signOut({ redirectUrl: basePath || "/" })}><LogOut size={13} /> Sign out</button>
       </div>
     </aside>
-    <main className="main-stage">
+    <main className={`main-stage ${currentPage === "chat" ? "chat-stage" : ""}`}>
       <header className="mobile-header"><Brand /><Link href="/profile" className="mobile-user" aria-label="Your style profile"><span className="profile-avatar">{initials}</span></Link></header>
       {children}
       <nav className="mobile-nav" aria-label="Main navigation">{navigation.map(({ href, label, icon: Icon, key }) => <Link key={key} href={href} className={currentPage === key ? "active" : ""}><Icon size={17} strokeWidth={1.7} /><span>{label}</span></Link>)}</nav>
