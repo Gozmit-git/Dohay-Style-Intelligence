@@ -35,28 +35,50 @@ async function run(id: string): Promise<void> {
       return;
     }
     const result = await postToAiService<{
-      garments: { imageIndices: number[]; attributes: unknown; isolatedImages: { dataBase64: string; contentType: string }[] }[]; warnings: string[];
+      garments: {
+        imageIndices: number[];
+        attributes: unknown;
+        isolatedImages: { dataBase64: string; contentType: string }[];
+        reconstructedImage: { dataBase64: string; contentType: string };
+        aiGeneratedImage: boolean;
+      }[];
+      warnings: string[];
     }>("/scan", { images });
     await consentFor(job.userId);
     if (!Array.isArray(result.garments)) throw new Error("The analysis response was incomplete. Please retry.");
-    const prepared: { id: string; imagePaths: string[]; sources: string[]; attributes: MvpAttributes; digest: string; legacyDigest: string; sourceHash: string }[] = [];
+    const prepared: {
+      id: string;
+      imagePaths: string[];
+      sources: string[];
+      attributes: MvpAttributes;
+      digest: string;
+      legacyDigest: string;
+      sourceHash: string;
+      aiGeneratedImage: boolean;
+    }[] = [];
     for (const detection of result.garments.slice(0, 30)) {
       const sources = [...new Set(detection.imageIndices.map((index) => {
         if (!Number.isInteger(index) || !job.objectPaths[index]) throw new Error("The analysis returned an invalid image reference.");
         return job.objectPaths[index];
       }))];
       if (!sources.length || !detection.isolatedImages?.length) throw new Error("An item could not be separated from the photo. Please retry.");
+      if (!detection.reconstructedImage || detection.aiGeneratedImage !== true) {
+        throw new Error("An AI garment image could not be created. Your original photos are unchanged; retry the capture.");
+      }
       const attributes = UpdateMvpItemBody.parse(detection.attributes);
       const roles = { top: "base", bottom: "bottom", one_piece: "one_piece", outerwear: "outer", footwear: "footwear", accessory: "accessory" } as const;
       attributes.layerRole = roles[attributes.category];
-      const imagePaths = [];
+      const cutoutPaths = [];
       for (const image of detection.isolatedImages.slice(0, 3)) {
-        const path = await storePrivateImage(job.userId, image, `${attributes.category}-cutout.png`);
-        createdPaths.push(path); imagePaths.push(path);
+        const path = await storePrivateImage(job.userId, image, `${attributes.category}-source-cutout.png`);
+        createdPaths.push(path); cutoutPaths.push(path);
       }
+      const generatedPath = await storePrivateImage(job.userId, detection.reconstructedImage, `${attributes.category}-ai-reconstruction.png`);
+      createdPaths.push(generatedPath);
+      const imagePaths = [generatedPath, ...cutoutPaths];
       const rawHash = createHash("sha256").update(Buffer.from(images[detection.imageIndices[0]].dataBase64, "base64")).digest("hex");
       const occurrence = prepared.filter((item) => item.sourceHash === rawHash && item.attributes.category === attributes.category).length;
-      prepared.push({ id: randomUUID(), imagePaths, sources, attributes, ...garmentIdentity(rawHash, attributes.category, attributes.subcategory, occurrence), sourceHash: rawHash });
+      prepared.push({ id: randomUUID(), imagePaths, sources, attributes, ...garmentIdentity(rawHash, attributes.category, attributes.subcategory, occurrence), sourceHash: rawHash, aiGeneratedImage: true });
     }
     const unused: string[] = [];
     await consentFor(job.userId);
@@ -69,12 +91,24 @@ async function run(id: string): Promise<void> {
         )).limit(1);
         let row = duplicate ?? (await tx.insert(wardrobeItems).values({
           userId: job.userId, imagePath: item.imagePaths[0], additionalImagePaths: item.imagePaths.slice(1),
-          imageDigest: item.digest, record: { ...legacyRecord(item.attributes, item.imagePaths), sourceImagePaths: item.sources, autoSaved: true },
+          imageDigest: item.digest, record: { ...legacyRecord(item.attributes, item.imagePaths), sourceImagePaths: item.sources, autoSaved: true, aiGeneratedImage: true },
         }).returning())[0];
-        if (duplicate && (item.sources.includes(duplicate.imagePath) || !Array.isArray(duplicate.record.sourceImagePaths))) {
+        const previousSourcePaths = duplicate && Array.isArray(duplicate.record.sourceImagePaths)
+          ? duplicate.record.sourceImagePaths.filter((path): path is string => typeof path === "string") : [];
+        if (duplicate && (
+          item.sources.some((path) => previousSourcePaths.includes(path))
+          || item.sources.includes(duplicate.imagePath)
+          || !Array.isArray(duplicate.record.sourceImagePaths)
+        )) {
           row = (await tx.update(wardrobeItems).set({
             imagePath: item.imagePaths[0], additionalImagePaths: item.imagePaths.slice(1), imageDigest: item.digest,
-            record: { ...duplicate.record, imagePath: item.imagePaths[0], additionalImagePaths: item.imagePaths.slice(1), sourceImagePaths: [...new Set([duplicate.imagePath, ...item.sources])] },
+            record: {
+              ...duplicate.record,
+              imagePath: item.imagePaths[0],
+              additionalImagePaths: item.imagePaths.slice(1),
+              sourceImagePaths: [...new Set([...previousSourcePaths, ...item.sources])],
+              aiGeneratedImage: item.aiGeneratedImage,
+            },
           }).where(eq(wardrobeItems.id, duplicate.id)).returning())[0];
         } else if (duplicate) unused.push(...item.imagePaths);
         drafts.push({ id: item.id, imagePaths: [row.imagePath, ...row.additionalImagePaths], attributes: itemApi(row).attributes, confirmedItemId: row.id });

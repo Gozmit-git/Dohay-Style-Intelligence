@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import binascii
 import json
@@ -11,7 +12,7 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from PIL import Image, ImageStat, ImageOps
 from image_processing import fit_photo_part
-from wardrobe_images import isolate_garment, render_styling_image
+from wardrobe_images import isolate_garment, reconstruct_garment_image, render_styling_image
 
 logger = logging.getLogger("dohay.fastapi")
 
@@ -519,22 +520,47 @@ async def scan(request: ScanRequest) -> dict:
             if not garment.attributes.colors:
                 garment.attributes.colors = ["Unknown"]
         warnings = quality_warnings + result.warnings
-        garments = []
+        separated = []
         for garment in result.garments:
             try:
                 regions = [region.model_dump() for region in garment.regions]
                 if any(region["imageIndex"] not in garment.imageIndices for region in regions):
                     raise ValueError("Invalid garment region image.")
                 isolated = isolate_garment([photo.model_dump() for photo in request.images], regions)
-                garments.append({**garment.model_dump(), "isolatedImages": isolated})
             except (ValueError, IndexError) as error:
                 warnings.append(f"One item could not be separated: {error}")
+                continue
+            separated.append((garment, isolated))
+
+        generation_limit = asyncio.Semaphore(3)
+
+        async def reconstruct(garment: DetectedGarment, isolated: list[dict]) -> dict:
+            async with generation_limit:
+                generated = await reconstruct_garment_image(
+                    client, isolated[0], garment.attributes.model_dump(),
+                )
+            return {
+                **garment.model_dump(),
+                "isolatedImages": isolated,
+                "reconstructedImage": generated,
+                "aiGeneratedImage": True,
+            }
+
+        generated_items = await asyncio.gather(
+            *(reconstruct(garment, isolated) for garment, isolated in separated),
+            return_exceptions=True,
+        )
+        garments = []
+        for generated in generated_items:
+            if isinstance(generated, BaseException):
+                raise generated
+            garments.append(generated)
         return {"garments": garments, "warnings": warnings}
     except Exception as error:
         logger.exception("Wardrobe scan failed")
         raise HTTPException(
             status_code=502,
-            detail="The image analysis could not finish. Your photos are private and no garment was saved. Retry the scan or use a clearer photo.",
+            detail="Garment detection or AI reconstruction could not finish. Your original photos are unchanged and no new items were saved. Retry the capture or use a clearer photo.",
         ) from error
 
 

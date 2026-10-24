@@ -635,6 +635,8 @@ export interface MvpDraft {
 export interface MvpItem {
   id: string;
   imagePaths: string[];
+  /** True when the primary wardrobe image is a generated reconstruction; the original photo remains separately stored. */
+  aiGeneratedImage: boolean;
   attributes: MvpAttributes;
   createdAt: string;
 }

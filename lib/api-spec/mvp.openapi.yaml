@@ -362,9 +362,10 @@ components:
       properties:
         id: { type: string }
         imagePaths: { type: array, items: { type: string } }
+        aiGeneratedImage: { type: boolean, description: "True when the primary wardrobe image is a generated reconstruction; the original photo remains separately stored." }
         attributes: { $ref: "#/components/schemas/MvpAttributes" }
         createdAt: { type: string }
-      required: [id, imagePaths, attributes, createdAt]
+      required: [id, imagePaths, aiGeneratedImage, attributes, createdAt]
     MvpStylingImageInput:
       type: object
       properties:

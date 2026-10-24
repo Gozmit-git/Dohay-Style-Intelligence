@@ -93,6 +93,7 @@ export function legacyAttributes(record: Record<string, unknown>): MvpAttributes
 export function itemApi(row: typeof wardrobeItems.$inferSelect): MvpItem {
   return {
     id: row.id, imagePaths: [row.imagePath, ...row.additionalImagePaths],
+    aiGeneratedImage: row.record.aiGeneratedImage === true,
     attributes: legacyAttributes(row.record), createdAt: row.createdAt.toISOString(),
   };
 }

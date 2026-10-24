@@ -43,10 +43,10 @@ export function ScanJobCard({ jobId, threadId, objectPaths }: Props) {
     {query.isLoading && <p>Loading processing status…</p>}
     {query.isError && <p role="alert">Status could not be loaded. <button type="button" className="text-button" onClick={() => query.refetch()}>Retry status</button></p>}
     {job && ["pending", "running"].includes(job.status) && <p role="status">
-      {job.kind === "styling_image" ? "Creating your AI styling image… Your original photo stays unchanged." : "Separating garments and saving each item automatically…"}
+      {job.kind === "styling_image" ? "Creating your AI styling image… Your original photo stays unchanged." : "Analyzing photos and generating full, front-facing AI garment images. Larger batches can take a few minutes; originals stay unchanged."}
       <br /><small>You can leave this page; processing continues.</small>
     </p>}
-    {job?.status === "failed" && <div role="alert"><p>{job.error || "Processing could not finish."}</p>
+    {job?.status === "failed" && <div role="alert"><p>{job.error || "AI garment image generation could not finish. Your original photos are unchanged."}</p>
       <button className="button button-small" type="button" disabled={scan.isPending || visual.isPending} onClick={retry}>Retry {job.kind === "styling_image" ? "styling image" : "capture"}</button></div>}
     {job?.status === "completed" && job.kind === "styling_image" && job.imagePath && <figure className="styling-simulation">
       <strong>Styling changes in Image</strong>

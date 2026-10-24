@@ -241,7 +241,10 @@
 .wardrobe-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .garment-card {min-width:0;overflow:hidden;background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:15px;box-shadow:0 5px 20px rgba(45,58,48,.04);transition:transform .2s,box-shadow .2s}
 .garment-card:hover {transform:translateY(-3px);box-shadow:var(--shadow-float)}
+.garment-image-frame {position:relative;background:linear-gradient(145deg,hsl(var(--secondary)),hsl(var(--muted)))}
 .garment-photo {width:100%;height:230px;object-fit:cover;background:linear-gradient(145deg,hsl(var(--secondary)),hsl(var(--muted)))}
+.garment-photo.ai-generated {object-fit:contain;padding:12px;box-sizing:border-box}
+.ai-generated-label {position:absolute;top:10px;left:10px;padding:6px 9px;border:1px solid hsl(var(--border));border-radius:999px;background:hsl(var(--card)/.94);color:hsl(var(--foreground));font:9px var(--app-font-mono);letter-spacing:.05em;text-transform:uppercase;backdrop-filter:blur(8px)}
 .garment-card-body {padding:14px}
 .garment-category {font:9px var(--app-font-mono);text-transform:uppercase;letter-spacing:.11em;color:hsl(var(--muted-foreground))}
 .garment-name {font:500 21px/1.2 var(--app-font-serif);margin:5px 0 9px}

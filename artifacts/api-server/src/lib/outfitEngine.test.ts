@@ -11,7 +11,7 @@ const context: MvpContext = { occasion: "Dinner", dressCode: "smart_casual", tem
 function item(id: string, role: MvpItem["attributes"]["layerRole"], overrides: Partial<MvpItem["attributes"]> = {}): MvpItem {
   const categories = { base: "top", bottom: "bottom", one_piece: "one_piece", outer: "outerwear", footwear: "footwear", accessory: "accessory" } as const;
   return {
-    id, imagePaths: [`/objects/uploads/${id}`], createdAt: new Date(0).toISOString(),
+    id, imagePaths: [`/objects/uploads/${id}`], aiGeneratedImage: false, createdAt: new Date(0).toISOString(),
     attributes: {
       category: categories[role], subcategory: role, colors: ["navy"], pattern: "solid",
       formality: "smart_casual", layerRole: role, occasionTags: ["dinner"], seasonTags: ["spring"],

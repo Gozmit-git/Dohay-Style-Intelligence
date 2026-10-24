@@ -81,7 +81,14 @@ function WardrobeItemCard({ item }: { item: MvpItem }) {
 
   return (
     <article className="garment-card">
-      <GarmentPhoto className="garment-photo" path={item.imagePaths[0]} alt={displayName(item.attributes)} />
+      <div className="garment-image-frame">
+        <GarmentPhoto
+          className={`garment-photo${item.aiGeneratedImage ? " ai-generated" : ""}`}
+          path={item.imagePaths[0]}
+          alt={`${displayName(item.attributes)}${item.aiGeneratedImage ? " — AI-generated reconstruction" : ""}`}
+        />
+        {item.aiGeneratedImage && <span className="ai-generated-label" title="AI reconstruction; check details against your original photo.">AI-generated</span>}
+      </div>
       <div className="garment-card-body">
         <div className="garment-category">{item.attributes.category.replace("_", " ")} · {item.attributes.layerRole.replace("_", " ")}</div>
         <h2 className="garment-name">{displayName(item.attributes)}</h2>

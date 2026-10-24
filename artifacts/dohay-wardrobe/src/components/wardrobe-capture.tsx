@@ -44,7 +44,7 @@ export function WardrobeCapture() {
         if (!response.ok) throw new Error("upload");
         objectPaths.push(target.objectPath);
       }
-      setProgress("Separating garments and saving them automatically…");
+      setProgress("Reconstructing full garment views and saving each piece…");
       await scan.mutateAsync({ data: { objectPaths } });
       await queryClient.invalidateQueries({ queryKey: getListMvpJobsQueryKey() });
     } catch { setError("Capture could not start. Please try again. Already saved items are unchanged."); }
@@ -55,7 +55,7 @@ export function WardrobeCapture() {
       <button type="button" className="button" disabled={!allowed || busy} onClick={() => picker.current?.click()}><ImagePlus size={16} />Upload photos</button>
       <button type="button" className="button button-soft" disabled={!allowed || busy} onClick={() => camera.current?.click()}><Camera size={16} />Take photo</button>
     </div>
-    <p>Garments, layers and accessories are separated into individual images and saved automatically. AI attributes and cutout edges are estimates; edit details afterward if needed.</p>
+    <p>Each garment or accessory is saved separately with a full, front-facing AI image. Your original photos stay unchanged; check logos and reconstructed details against them.</p>
     <p className="private-note">JPEG, PNG or WebP · 10 MB each · up to 10 photos. Only visible portions are extracted; hidden fabric is not reconstructed.</p>
     {!allowed && <label className="consent-box"><input type="checkbox" disabled={!profile.data || consent.isPending} checked={false} onChange={async () => {
       if (!profile.data) return;

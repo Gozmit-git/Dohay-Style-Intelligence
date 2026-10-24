@@ -895,6 +895,7 @@ export const listMvpWardrobeResponseAttributesConfidenceMax = 1;
 export const ListMvpWardrobeResponseItem = zod.object({
   "id": zod.string(),
   "imagePaths": zod.array(zod.string()),
+  "aiGeneratedImage": zod.boolean().describe('True when the primary wardrobe image is a generated reconstruction; the original photo remains separately stored.'),
   "attributes": zod.object({
   "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
   "subcategory": zod.string().max(listMvpWardrobeResponseAttributesSubcategoryMax),
@@ -977,6 +978,7 @@ export const confirmMvpItemResponseAttributesConfidenceMax = 1;
 export const ConfirmMvpItemResponse = zod.object({
   "id": zod.string(),
   "imagePaths": zod.array(zod.string()),
+  "aiGeneratedImage": zod.boolean().describe('True when the primary wardrobe image is a generated reconstruction; the original photo remains separately stored.'),
   "attributes": zod.object({
   "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
   "subcategory": zod.string().max(confirmMvpItemResponseAttributesSubcategoryMax),
@@ -1057,6 +1059,7 @@ export const updateMvpItemResponseAttributesConfidenceMax = 1;
 export const UpdateMvpItemResponse = zod.object({
   "id": zod.string(),
   "imagePaths": zod.array(zod.string()),
+  "aiGeneratedImage": zod.boolean().describe('True when the primary wardrobe image is a generated reconstruction; the original photo remains separately stored.'),
   "attributes": zod.object({
   "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
   "subcategory": zod.string().max(updateMvpItemResponseAttributesSubcategoryMax),
