@@ -25,6 +25,18 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BillingBadRequestResponse,
+  BillingCatalog,
+  BillingCheckoutInput,
+  BillingCheckoutUnavailable,
+  BillingConflictResponse,
+  BillingError,
+  BillingNotFoundResponse,
+  BillingQuote,
+  BillingQuoteInput,
+  BillingSubscription,
+  BillingUnauthorizedResponse,
+  BillingUnavailableResponse,
   ConfirmMvpItemBody,
   CreateMvpThreadBody,
   CreateMvpUpload200,
@@ -85,6 +97,474 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getListBillingPlansUrl = () => {
+
+
+
+
+  return `/api/billing/plans`
+}
+
+/**
+ * @summary Pricing in paise; planned limits are not yet enforced
+ */
+export const listBillingPlans = async ( options?: Parameters<typeof customFetch>[1]): Promise<BillingCatalog> => {
+
+  return customFetch<BillingCatalog>(getListBillingPlansUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListBillingPlansQueryKey = () => {
+    return [
+    `/api/billing/plans`
+    ] as const;
+    }
+
+
+export const getListBillingPlansQueryOptions = <TData = Awaited<ReturnType<typeof listBillingPlans>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBillingPlans>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListBillingPlansQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listBillingPlans>>> = ({ signal }) => listBillingPlans({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBillingPlans>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListBillingPlansQueryResult = NonNullable<Awaited<ReturnType<typeof listBillingPlans>>>
+export type ListBillingPlansQueryError = ErrorType<unknown>
+
+
+export function useListBillingPlans<TData = Awaited<ReturnType<typeof listBillingPlans>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBillingPlans>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listBillingPlans>>,
+          TError,
+          Awaited<ReturnType<typeof listBillingPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListBillingPlans<TData = Awaited<ReturnType<typeof listBillingPlans>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBillingPlans>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listBillingPlans>>,
+          TError,
+          Awaited<ReturnType<typeof listBillingPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListBillingPlans<TData = Awaited<ReturnType<typeof listBillingPlans>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBillingPlans>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Pricing in paise; planned limits are not yet enforced
+ */
+
+export function useListBillingPlans<TData = Awaited<ReturnType<typeof listBillingPlans>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBillingPlans>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListBillingPlansQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetBillingSubscriptionUrl = () => {
+
+
+
+
+  return `/api/billing/subscription`
+}
+
+export const getBillingSubscription = async ( options?: Parameters<typeof customFetch>[1]): Promise<BillingSubscription> => {
+
+  return customFetch<BillingSubscription>(getGetBillingSubscriptionUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBillingSubscriptionQueryKey = () => {
+    return [
+    `/api/billing/subscription`
+    ] as const;
+    }
+
+
+export const getGetBillingSubscriptionQueryOptions = <TData = Awaited<ReturnType<typeof getBillingSubscription>>, TError = ErrorType<BillingUnauthorizedResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBillingSubscription>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBillingSubscriptionQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBillingSubscription>>> = ({ signal }) => getBillingSubscription({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBillingSubscription>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetBillingSubscriptionQueryResult = NonNullable<Awaited<ReturnType<typeof getBillingSubscription>>>
+export type GetBillingSubscriptionQueryError = ErrorType<BillingUnauthorizedResponse>
+
+
+export function useGetBillingSubscription<TData = Awaited<ReturnType<typeof getBillingSubscription>>, TError = ErrorType<BillingUnauthorizedResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBillingSubscription>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBillingSubscription>>,
+          TError,
+          Awaited<ReturnType<typeof getBillingSubscription>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBillingSubscription<TData = Awaited<ReturnType<typeof getBillingSubscription>>, TError = ErrorType<BillingUnauthorizedResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBillingSubscription>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBillingSubscription>>,
+          TError,
+          Awaited<ReturnType<typeof getBillingSubscription>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBillingSubscription<TData = Awaited<ReturnType<typeof getBillingSubscription>>, TError = ErrorType<BillingUnauthorizedResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBillingSubscription>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetBillingSubscription<TData = Awaited<ReturnType<typeof getBillingSubscription>>, TError = ErrorType<BillingUnauthorizedResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBillingSubscription>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetBillingSubscriptionQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateBillingQuoteUrl = () => {
+
+
+
+
+  return `/api/billing/quotes`
+}
+
+/**
+ * @summary Save a 15-minute base-price quote; does not charge or redeem the launch offer
+ */
+export const createBillingQuote = async (billingQuoteInput: BillingQuoteInput, options?: Parameters<typeof customFetch>[1]): Promise<BillingQuote> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BillingQuote>(getCreateBillingQuoteUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(billingQuoteInput)
+  }
+);}
+
+
+
+
+
+export const getCreateBillingQuoteMutationKey = () => ['createBillingQuote'] as const;
+
+export const getCreateBillingQuoteMutationOptions = <TError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingConflictResponse | BillingError | BillingUnavailableResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBillingQuote>>, TError,CreateBillingQuoteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBillingQuote>>, TError,CreateBillingQuoteMutationVariables, TContext> => {
+
+const mutationKey = getCreateBillingQuoteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBillingQuote>>, CreateBillingQuoteMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createBillingQuote(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateBillingQuoteMutationResult = NonNullable<Awaited<ReturnType<typeof createBillingQuote>>>
+    export type CreateBillingQuoteMutationBody = BodyType<BillingQuoteInput>
+    export type CreateBillingQuoteMutationError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingConflictResponse | BillingError | BillingUnavailableResponse>
+    export type CreateBillingQuoteMutationVariables = {data: BodyType<BillingQuoteInput>}
+
+    /**
+ * @summary Save a 15-minute base-price quote; does not charge or redeem the launch offer
+ */
+export const useCreateBillingQuote = <TError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingConflictResponse | BillingError | BillingUnavailableResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBillingQuote>>, TError,CreateBillingQuoteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createBillingQuote>>,
+        TError,
+        CreateBillingQuoteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateBillingQuoteMutationOptions(options), queryClient);
+    }
+
+export const getGetBillingQuoteUrl = (quoteId: string,) => {
+
+
+
+
+  return `/api/billing/quotes/${quoteId}`
+}
+
+export const getBillingQuote = async (quoteId: string, options?: Parameters<typeof customFetch>[1]): Promise<BillingQuote> => {
+
+  return customFetch<BillingQuote>(getGetBillingQuoteUrl(quoteId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBillingQuoteQueryKey = (quoteId: string,) => {
+    return [
+    `/api/billing/quotes/${quoteId}`
+    ] as const;
+    }
+
+
+export const getGetBillingQuoteQueryOptions = <TData = Awaited<ReturnType<typeof getBillingQuote>>, TError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingNotFoundResponse>>(quoteId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBillingQuote>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBillingQuoteQueryKey(quoteId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBillingQuote>>> = ({ signal }) => getBillingQuote(quoteId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: quoteId !== null && quoteId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBillingQuote>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetBillingQuoteQueryResult = NonNullable<Awaited<ReturnType<typeof getBillingQuote>>>
+export type GetBillingQuoteQueryError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingNotFoundResponse>
+
+
+export function useGetBillingQuote<TData = Awaited<ReturnType<typeof getBillingQuote>>, TError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingNotFoundResponse>>(
+ quoteId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBillingQuote>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBillingQuote>>,
+          TError,
+          Awaited<ReturnType<typeof getBillingQuote>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBillingQuote<TData = Awaited<ReturnType<typeof getBillingQuote>>, TError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingNotFoundResponse>>(
+ quoteId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBillingQuote>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBillingQuote>>,
+          TError,
+          Awaited<ReturnType<typeof getBillingQuote>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBillingQuote<TData = Awaited<ReturnType<typeof getBillingQuote>>, TError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingNotFoundResponse>>(
+ quoteId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBillingQuote>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetBillingQuote<TData = Awaited<ReturnType<typeof getBillingQuote>>, TError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingNotFoundResponse>>(
+ quoteId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBillingQuote>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetBillingQuoteQueryOptions(quoteId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getStartBillingCheckoutUrl = () => {
+
+
+
+
+  return `/api/billing/checkout`
+}
+
+/**
+ * No provider adapter is enabled. This endpoint never takes payment, activates a subscription, or redeems an offer.
+ * @summary Validate an owned quote; currently fails closed with PAYMENTS_NOT_READY
+ */
+export const startBillingCheckout = async (billingCheckoutInput: BillingCheckoutInput, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<unknown>(getStartBillingCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(billingCheckoutInput)
+  }
+);}
+
+
+
+
+
+export const getStartBillingCheckoutMutationKey = () => ['startBillingCheckout'] as const;
+
+export const getStartBillingCheckoutMutationOptions = <TError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingNotFoundResponse | BillingConflictResponse | BillingCheckoutUnavailable>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startBillingCheckout>>, TError,StartBillingCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startBillingCheckout>>, TError,StartBillingCheckoutMutationVariables, TContext> => {
+
+const mutationKey = getStartBillingCheckoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startBillingCheckout>>, StartBillingCheckoutMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  startBillingCheckout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartBillingCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof startBillingCheckout>>>
+    export type StartBillingCheckoutMutationBody = BodyType<BillingCheckoutInput>
+    export type StartBillingCheckoutMutationError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingNotFoundResponse | BillingConflictResponse | BillingCheckoutUnavailable>
+    export type StartBillingCheckoutMutationVariables = {data: BodyType<BillingCheckoutInput>}
+
+    /**
+ * @summary Validate an owned quote; currently fails closed with PAYMENTS_NOT_READY
+ */
+export const useStartBillingCheckout = <TError = ErrorType<BillingBadRequestResponse | BillingUnauthorizedResponse | BillingNotFoundResponse | BillingConflictResponse | BillingCheckoutUnavailable>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startBillingCheckout>>, TError,StartBillingCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof startBillingCheckout>>,
+        TError,
+        StartBillingCheckoutMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStartBillingCheckoutMutationOptions(options), queryClient);
+    }
 
 export const getHealthCheckUrl = () => {
 

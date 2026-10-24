@@ -5,6 +5,215 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface BillingError {
+  error: string;
+}
+
+export type BillingReadinessMode = typeof BillingReadinessMode[keyof typeof BillingReadinessMode];
+
+
+export const BillingReadinessMode = {
+  disabled: 'disabled',
+} as const;
+
+export interface BillingReadiness {
+  checkoutEnabled: false;
+  mode: BillingReadinessMode;
+  blockers: string[];
+}
+
+export interface BillingLimits {
+  /** @minimum 0 */
+  chatReplies: number;
+  /** @minimum 0 */
+  photoReviews: number;
+  /** @minimum 0 */
+  wardrobeItems: number;
+  /** @minimum 0 */
+  outfitRequests: number;
+}
+
+export type BillingPlanId = typeof BillingPlanId[keyof typeof BillingPlanId];
+
+
+export const BillingPlanId = {
+  free: 'free',
+  plus: 'plus',
+  pro: 'pro',
+} as const;
+
+export interface BillingPlan {
+  id: BillingPlanId;
+  name: string;
+  /** @minimum 0 */
+  monthlyAmount: number;
+  /** @minimum 0 */
+  annualAmount: number;
+  limits: BillingLimits;
+}
+
+export type BillingCatalogCurrency = typeof BillingCatalogCurrency[keyof typeof BillingCatalogCurrency];
+
+
+export const BillingCatalogCurrency = {
+  INR: 'INR',
+} as const;
+
+export type BillingCatalogAmountUnit = typeof BillingCatalogAmountUnit[keyof typeof BillingCatalogAmountUnit];
+
+
+export const BillingCatalogAmountUnit = {
+  paise: 'paise',
+} as const;
+
+export type BillingCatalogTaxStatus = typeof BillingCatalogTaxStatus[keyof typeof BillingCatalogTaxStatus];
+
+
+export const BillingCatalogTaxStatus = {
+  not_configured: 'not_configured',
+} as const;
+
+export type BillingCatalog = BillingReadiness & {
+  currency: BillingCatalogCurrency;
+  amountUnit: BillingCatalogAmountUnit;
+  taxStatus: BillingCatalogTaxStatus;
+  usageLimitsEnforced: false;
+  plans: BillingPlan[];
+};
+
+export type BillingSubscriptionPlan = typeof BillingSubscriptionPlan[keyof typeof BillingSubscriptionPlan];
+
+
+export const BillingSubscriptionPlan = {
+  free: 'free',
+} as const;
+
+export type BillingSubscriptionStatus = typeof BillingSubscriptionStatus[keyof typeof BillingSubscriptionStatus];
+
+
+export const BillingSubscriptionStatus = {
+  no_paid_subscription: 'no_paid_subscription',
+} as const;
+
+export type BillingSubscriptionLaunchOffer = typeof BillingSubscriptionLaunchOffer[keyof typeof BillingSubscriptionLaunchOffer];
+
+
+export const BillingSubscriptionLaunchOffer = {
+  eligible: 'eligible',
+  redeemed: 'redeemed',
+  not_yet_evaluated: 'not_yet_evaluated',
+} as const;
+
+export type BillingSubscription = BillingReadiness & {
+  plan: BillingSubscriptionPlan;
+  status: BillingSubscriptionStatus;
+  launchOffer: BillingSubscriptionLaunchOffer;
+  usageLimitsEnforced: false;
+};
+
+export type BillingQuoteInputPlan = typeof BillingQuoteInputPlan[keyof typeof BillingQuoteInputPlan];
+
+
+export const BillingQuoteInputPlan = {
+  plus: 'plus',
+  pro: 'pro',
+} as const;
+
+export type BillingQuoteInputInterval = typeof BillingQuoteInputInterval[keyof typeof BillingQuoteInputInterval];
+
+
+export const BillingQuoteInputInterval = {
+  month: 'month',
+  year: 'year',
+} as const;
+
+export interface BillingQuoteInput {
+  plan: BillingQuoteInputPlan;
+  interval: BillingQuoteInputInterval;
+  /** Client-generated idempotency UUID */
+  requestKey: string;
+}
+
+export type BillingQuotePlan = typeof BillingQuotePlan[keyof typeof BillingQuotePlan];
+
+
+export const BillingQuotePlan = {
+  plus: 'plus',
+  pro: 'pro',
+} as const;
+
+export type BillingQuoteInterval = typeof BillingQuoteInterval[keyof typeof BillingQuoteInterval];
+
+
+export const BillingQuoteInterval = {
+  month: 'month',
+  year: 'year',
+} as const;
+
+export type BillingQuoteCurrency = typeof BillingQuoteCurrency[keyof typeof BillingQuoteCurrency];
+
+
+export const BillingQuoteCurrency = {
+  INR: 'INR',
+} as const;
+
+export type BillingQuoteAmountUnit = typeof BillingQuoteAmountUnit[keyof typeof BillingQuoteAmountUnit];
+
+
+export const BillingQuoteAmountUnit = {
+  paise: 'paise',
+} as const;
+
+export type BillingQuoteDiscountPercent = typeof BillingQuoteDiscountPercent[keyof typeof BillingQuoteDiscountPercent];
+
+
+export const BillingQuoteDiscountPercent = {
+  NUMBER_0: 0,
+  NUMBER_70: 70,
+} as const;
+
+export type BillingQuoteTaxStatus = typeof BillingQuoteTaxStatus[keyof typeof BillingQuoteTaxStatus];
+
+
+export const BillingQuoteTaxStatus = {
+  not_configured: 'not_configured',
+} as const;
+
+export interface BillingQuote {
+  id: string;
+  plan: BillingQuotePlan;
+  interval: BillingQuoteInterval;
+  currency: BillingQuoteCurrency;
+  amountUnit: BillingQuoteAmountUnit;
+  /** @minimum 0 */
+  regularAmount: number;
+  /** @minimum 0 */
+  firstTermAmount: number;
+  discountPercent: BillingQuoteDiscountPercent;
+  /** @minimum 0 */
+  renewalAmount: number;
+  taxStatus: BillingQuoteTaxStatus;
+  payable: false;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface BillingCheckoutInput {
+  quoteId: string;
+}
+
+export type BillingCheckoutUnavailableCode = typeof BillingCheckoutUnavailableCode[keyof typeof BillingCheckoutUnavailableCode];
+
+
+export const BillingCheckoutUnavailableCode = {
+  PAYMENTS_NOT_READY: 'PAYMENTS_NOT_READY',
+} as const;
+
+export type BillingCheckoutUnavailable = BillingReadiness & {
+  error: string;
+  code: BillingCheckoutUnavailableCode;
+};
+
 export interface HealthStatus {
   status: string;
 }
@@ -550,6 +759,31 @@ export interface MvpOutfit {
   feedback: string | null;
   createdAt: string;
 }
+
+/**
+ * Invalid request
+ */
+export type BillingBadRequestResponse = BillingError;
+
+/**
+ * Sign in required
+ */
+export type BillingUnauthorizedResponse = BillingError;
+
+/**
+ * Resource missing or owned by another user
+ */
+export type BillingNotFoundResponse = BillingError;
+
+/**
+ * Expired quote or request key reused with different input
+ */
+export type BillingConflictResponse = BillingError;
+
+/**
+ * Eligibility provider unavailable; no quote issued
+ */
+export type BillingUnavailableResponse = BillingError;
 
 export type CreateMvpUploadBodyContentType = typeof CreateMvpUploadBodyContentType[keyof typeof CreateMvpUploadBodyContentType];
 

@@ -9,6 +9,133 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Pricing in paise; planned limits are not yet enforced
+ */
+export const listBillingPlansResponseTwoPlansItemMonthlyAmountMin = 0;
+
+export const listBillingPlansResponseTwoPlansItemAnnualAmountMin = 0;
+
+export const listBillingPlansResponseTwoPlansItemLimitsChatRepliesMin = 0;
+
+export const listBillingPlansResponseTwoPlansItemLimitsPhotoReviewsMin = 0;
+
+export const listBillingPlansResponseTwoPlansItemLimitsWardrobeItemsMin = 0;
+
+export const listBillingPlansResponseTwoPlansItemLimitsOutfitRequestsMin = 0;
+
+
+
+export const ListBillingPlansResponse = zod.object({
+  "checkoutEnabled": zod.literal(false),
+  "mode": zod.enum(['disabled']),
+  "blockers": zod.array(zod.string())
+}).and(zod.object({
+  "currency": zod.enum(['INR']),
+  "amountUnit": zod.enum(['paise']),
+  "taxStatus": zod.enum(['not_configured']),
+  "usageLimitsEnforced": zod.literal(false),
+  "plans": zod.array(zod.object({
+  "id": zod.enum(['free', 'plus', 'pro']),
+  "name": zod.string(),
+  "monthlyAmount": zod.number().int().min(listBillingPlansResponseTwoPlansItemMonthlyAmountMin),
+  "annualAmount": zod.number().int().min(listBillingPlansResponseTwoPlansItemAnnualAmountMin),
+  "limits": zod.object({
+  "chatReplies": zod.number().int().min(listBillingPlansResponseTwoPlansItemLimitsChatRepliesMin),
+  "photoReviews": zod.number().int().min(listBillingPlansResponseTwoPlansItemLimitsPhotoReviewsMin),
+  "wardrobeItems": zod.number().int().min(listBillingPlansResponseTwoPlansItemLimitsWardrobeItemsMin),
+  "outfitRequests": zod.number().int().min(listBillingPlansResponseTwoPlansItemLimitsOutfitRequestsMin)
+})
+}))
+}))
+
+
+export const GetBillingSubscriptionResponse = zod.object({
+  "checkoutEnabled": zod.literal(false),
+  "mode": zod.enum(['disabled']),
+  "blockers": zod.array(zod.string())
+}).and(zod.object({
+  "plan": zod.enum(['free']),
+  "status": zod.enum(['no_paid_subscription']),
+  "launchOffer": zod.enum(['eligible', 'redeemed', 'not_yet_evaluated']),
+  "usageLimitsEnforced": zod.literal(false)
+}))
+
+
+/**
+ * @summary Save a 15-minute base-price quote; does not charge or redeem the launch offer
+ */
+export const CreateBillingQuoteBody = zod.object({
+  "plan": zod.enum(['plus', 'pro']),
+  "interval": zod.enum(['month', 'year']),
+  "requestKey": zod.string().uuid().describe('Client-generated idempotency UUID')
+})
+
+export const createBillingQuoteResponseRegularAmountMin = 0;
+
+export const createBillingQuoteResponseFirstTermAmountMin = 0;
+
+export const createBillingQuoteResponseRenewalAmountMin = 0;
+
+
+
+export const CreateBillingQuoteResponse = zod.object({
+  "id": zod.string().uuid(),
+  "plan": zod.enum(['plus', 'pro']),
+  "interval": zod.enum(['month', 'year']),
+  "currency": zod.enum(['INR']),
+  "amountUnit": zod.enum(['paise']),
+  "regularAmount": zod.number().int().min(createBillingQuoteResponseRegularAmountMin),
+  "firstTermAmount": zod.number().int().min(createBillingQuoteResponseFirstTermAmountMin),
+  "discountPercent": zod.union([zod.literal(0),zod.literal(70)]),
+  "renewalAmount": zod.number().int().min(createBillingQuoteResponseRenewalAmountMin),
+  "taxStatus": zod.enum(['not_configured']),
+  "payable": zod.literal(false),
+  "createdAt": zod.string(),
+  "expiresAt": zod.string()
+})
+
+
+export const GetBillingQuoteParams = zod.object({
+  "quoteId": zod.coerce.string().uuid()
+})
+
+export const getBillingQuoteResponseRegularAmountMin = 0;
+
+export const getBillingQuoteResponseFirstTermAmountMin = 0;
+
+export const getBillingQuoteResponseRenewalAmountMin = 0;
+
+
+
+export const GetBillingQuoteResponse = zod.object({
+  "id": zod.string().uuid(),
+  "plan": zod.enum(['plus', 'pro']),
+  "interval": zod.enum(['month', 'year']),
+  "currency": zod.enum(['INR']),
+  "amountUnit": zod.enum(['paise']),
+  "regularAmount": zod.number().int().min(getBillingQuoteResponseRegularAmountMin),
+  "firstTermAmount": zod.number().int().min(getBillingQuoteResponseFirstTermAmountMin),
+  "discountPercent": zod.union([zod.literal(0),zod.literal(70)]),
+  "renewalAmount": zod.number().int().min(getBillingQuoteResponseRenewalAmountMin),
+  "taxStatus": zod.enum(['not_configured']),
+  "payable": zod.literal(false),
+  "createdAt": zod.string(),
+  "expiresAt": zod.string()
+})
+
+
+/**
+ * No provider adapter is enabled. This endpoint never takes payment, activates a subscription, or redeems an offer.
+ * @summary Validate an owned quote; currently fails closed with PAYMENTS_NOT_READY
+ */
+export const StartBillingCheckoutBody = zod.object({
+  "quoteId": zod.string().uuid()
+})
+
+export const StartBillingCheckoutResponse = zod.void()
+
+
+/**
  * Returns server health status
  * @summary Health check
  */

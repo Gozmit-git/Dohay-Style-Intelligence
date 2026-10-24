@@ -17,6 +17,91 @@ tags:
   - name: storage
     description: Private image upload support
 paths:
+  /billing/plans:
+    get:
+      operationId: listBillingPlans
+      summary: Pricing in paise; planned limits are not yet enforced
+      responses:
+        "200":
+          description: Public catalog and payment readiness
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingCatalog" }
+  /billing/subscription:
+    get:
+      operationId: getBillingSubscription
+      security: [{ BillingSession: [] }]
+      responses:
+        "200":
+          description: Current billing state; no paid subscriptions are activated yet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingSubscription" }
+        "401": { $ref: "#/components/responses/BillingUnauthorized" }
+  /billing/quotes:
+    post:
+      operationId: createBillingQuote
+      summary: Save a 15-minute base-price quote; does not charge or redeem the launch offer
+      security: [{ BillingSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BillingQuoteInput" }
+      responses:
+        "201":
+          description: Saved quote (same request key replays the same unexpired quote)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingQuote" }
+        "400": { $ref: "#/components/responses/BillingBadRequest" }
+        "401": { $ref: "#/components/responses/BillingUnauthorized" }
+        "409": { $ref: "#/components/responses/BillingConflict" }
+        "429":
+          description: At most ten new quotes per user per 15 minutes; idempotent replays do not count
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingError" }
+        "503": { $ref: "#/components/responses/BillingUnavailable" }
+  /billing/quotes/{quoteId}:
+    get:
+      operationId: getBillingQuote
+      security: [{ BillingSession: [] }]
+      parameters:
+        - in: path
+          name: quoteId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Owned quote, including its expiry timestamp
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingQuote" }
+        "400": { $ref: "#/components/responses/BillingBadRequest" }
+        "401": { $ref: "#/components/responses/BillingUnauthorized" }
+        "404": { $ref: "#/components/responses/BillingNotFound" }
+  /billing/checkout:
+    post:
+      operationId: startBillingCheckout
+      summary: Validate an owned quote; currently fails closed with PAYMENTS_NOT_READY
+      description: No provider adapter is enabled. This endpoint never takes payment, activates a subscription, or redeems an offer.
+      security: [{ BillingSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BillingCheckoutInput" }
+      responses:
+        "400": { $ref: "#/components/responses/BillingBadRequest" }
+        "401": { $ref: "#/components/responses/BillingUnauthorized" }
+        "404": { $ref: "#/components/responses/BillingNotFound" }
+        "409": { $ref: "#/components/responses/BillingConflict" }
+        "503":
+          description: Checkout is deliberately disabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingCheckoutUnavailable" }
   /healthz:
     get:
       operationId: healthCheck
@@ -178,7 +263,127 @@ paths:
   /v1/outfits/{outfitId}/feedback:
     $ref: "./mvp.openapi.yaml#/paths/~1v1~1outfits~1{outfitId}~1feedback"
 components:
+  securitySchemes:
+    BillingSession:
+      type: http
+      scheme: bearer
+      description: Existing Clerk session, via bearer token or session cookie
+  responses:
+    BillingBadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/BillingError" }
+    BillingUnauthorized:
+      description: Sign in required
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/BillingError" }
+    BillingNotFound:
+      description: Resource missing or owned by another user
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/BillingError" }
+    BillingConflict:
+      description: Expired quote or request key reused with different input
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/BillingError" }
+    BillingUnavailable:
+      description: Eligibility provider unavailable; no quote issued
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/BillingError" }
   schemas:
+    BillingError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+    BillingReadiness:
+      type: object
+      required: [checkoutEnabled, mode, blockers]
+      properties:
+        checkoutEnabled: { type: boolean, enum: [false] }
+        mode: { type: string, enum: [disabled] }
+        blockers: { type: array, items: { type: string } }
+    BillingLimits:
+      type: object
+      required: [chatReplies, photoReviews, wardrobeItems, outfitRequests]
+      properties:
+        chatReplies: { type: integer, minimum: 0 }
+        photoReviews: { type: integer, minimum: 0 }
+        wardrobeItems: { type: integer, minimum: 0 }
+        outfitRequests: { type: integer, minimum: 0 }
+    BillingPlan:
+      type: object
+      required: [id, name, monthlyAmount, annualAmount, limits]
+      properties:
+        id: { type: string, enum: [free, plus, pro] }
+        name: { type: string }
+        monthlyAmount: { type: integer, minimum: 0 }
+        annualAmount: { type: integer, minimum: 0 }
+        limits: { $ref: "#/components/schemas/BillingLimits" }
+    BillingCatalog:
+      allOf:
+        - $ref: "#/components/schemas/BillingReadiness"
+        - type: object
+          required: [currency, amountUnit, taxStatus, usageLimitsEnforced, plans]
+          properties:
+            currency: { type: string, enum: [INR] }
+            amountUnit: { type: string, enum: [paise] }
+            taxStatus: { type: string, enum: [not_configured] }
+            usageLimitsEnforced: { type: boolean, enum: [false] }
+            plans: { type: array, items: { $ref: "#/components/schemas/BillingPlan" } }
+    BillingSubscription:
+      allOf:
+        - $ref: "#/components/schemas/BillingReadiness"
+        - type: object
+          required: [plan, status, launchOffer, usageLimitsEnforced]
+          properties:
+            plan: { type: string, enum: [free] }
+            status: { type: string, enum: [no_paid_subscription] }
+            launchOffer: { type: string, enum: [eligible, redeemed, not_yet_evaluated] }
+            usageLimitsEnforced: { type: boolean, enum: [false] }
+    BillingQuoteInput:
+      type: object
+      additionalProperties: false
+      required: [plan, interval, requestKey]
+      properties:
+        plan: { type: string, enum: [plus, pro] }
+        interval: { type: string, enum: [month, year] }
+        requestKey: { type: string, format: uuid, description: Client-generated idempotency UUID, scoped to the signed-in user }
+    BillingQuote:
+      type: object
+      required: [id, plan, interval, currency, amountUnit, regularAmount, firstTermAmount, discountPercent, renewalAmount, taxStatus, payable, createdAt, expiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        plan: { type: string, enum: [plus, pro] }
+        interval: { type: string, enum: [month, year] }
+        currency: { type: string, enum: [INR] }
+        amountUnit: { type: string, enum: [paise] }
+        regularAmount: { type: integer, minimum: 0 }
+        firstTermAmount: { type: integer, minimum: 0 }
+        discountPercent: { type: integer, enum: [0, 70] }
+        renewalAmount: { type: integer, minimum: 0 }
+        taxStatus: { type: string, enum: [not_configured] }
+        payable: { type: boolean, enum: [false] }
+        createdAt: { type: string }
+        expiresAt: { type: string }
+    BillingCheckoutInput:
+      type: object
+      additionalProperties: false
+      required: [quoteId]
+      properties:
+        quoteId: { type: string, format: uuid }
+    BillingCheckoutUnavailable:
+      allOf:
+        - $ref: "#/components/schemas/BillingReadiness"
+        - type: object
+          required: [error, code]
+          properties:
+            error: { type: string }
+            code: { type: string, enum: [PAYMENTS_NOT_READY] }
     HealthStatus:
       type: object
       properties:

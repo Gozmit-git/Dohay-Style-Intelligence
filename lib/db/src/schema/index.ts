@@ -19,3 +19,4 @@
 
 export * from "./wardrobe";
 export * from "./mvp";
+export * from "./billing";

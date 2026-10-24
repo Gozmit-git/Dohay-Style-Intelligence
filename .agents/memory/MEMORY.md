@@ -2,3 +2,4 @@
 - [API contract generation](api-contracts.md) — test nullable referenced objects at runtime; disambiguate generated validators without removing automatic type exports.
 - [Stable browser verification](browser-verification.md) — freeze hook changes during browser checks; cold-load after hot-reload hook-order errors before diagnosing.
 - [Paid image generation](paid-image-generation.md) — reuse existing outputs on reload; a provider timeout does not prove generation was unbilled.
+- [Payment provider requirement](payment-provider.md) — Pine Labs is required; do not substitute another gateway without approval.
