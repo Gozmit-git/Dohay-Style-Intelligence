@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: wardrobe
+    description: Garment capture, analysis, and wardrobe management
+  - name: recommendations
+    description: Outfit recommendations based on saved wardrobe items
+  - name: storage
+    description: Private image upload support
 paths:
   /healthz:
     get:
@@ -24,6 +30,123 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /storage/uploads/request-url:
+    post:
+      operationId: requestWardrobeUploadUrl
+      tags: [storage]
+      summary: Request a private upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadRequest"
+      responses:
+        "200":
+          description: Upload URL and private object path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadTarget"
+  /wardrobe/analyze:
+    post:
+      operationId: analyzeGarment
+      tags: [wardrobe]
+      summary: Analyze uploaded garment photos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GarmentAnalysisInput"
+      responses:
+        "200":
+          description: Structured visual garment analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GarmentAnalysis"
+  /wardrobe/chat:
+    post:
+      operationId: chatAboutGarment
+      tags: [wardrobe]
+      summary: Continue a conversation about a garment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GarmentChatInput"
+      responses:
+        "200":
+          description: Stylist reply with any useful confirmed field suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GarmentChatReply"
+  /wardrobe/items:
+    get:
+      operationId: listWardrobeItems
+      tags: [wardrobe]
+      summary: List the signed-in user's saved garments
+      responses:
+        "200":
+          description: Saved wardrobe items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WardrobeItem"
+    post:
+      operationId: saveWardrobeItem
+      tags: [wardrobe]
+      summary: Save a user-approved garment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WardrobeItemInput"
+      responses:
+        "201":
+          description: Saved garment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WardrobeItem"
+        "409":
+          description: A matching photo is already in this wardrobe
+  /wardrobe/summary:
+    get:
+      operationId: getWardrobeSummary
+      tags: [wardrobe]
+      summary: Get a compact wardrobe overview
+      responses:
+        "200":
+          description: Wardrobe counts and recent items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WardrobeSummary"
+  /wardrobe/recommendations:
+    post:
+      operationId: recommendOutfits
+      tags: [recommendations]
+      summary: Recommend outfits using a saved garment and the user's wardrobe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutfitRequest"
+      responses:
+        "200":
+          description: Contextual outfit recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutfitResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +156,226 @@ components:
           type: string
       required:
         - status
+    UploadRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 180
+        size:
+          type: integer
+          minimum: 1
+          maximum: 15728640
+        contentType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp, image/heic]
+      required: [name, size, contentType]
+    UploadTarget:
+      type: object
+      properties:
+        uploadURL: { type: string, format: uri }
+        objectPath: { type: string, minLength: 1 }
+      required: [uploadURL, objectPath]
+    GarmentAnalysisInput:
+      type: object
+      properties:
+        objectPaths:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: { type: string, minLength: 1 }
+        userNote:
+          type: string
+          maxLength: 500
+      required: [objectPaths]
+    AttributeSource:
+      type: object
+      properties:
+        attribute: { type: string }
+        value: { type: string }
+        source:
+          type: string
+          enum: [visually_observed, AI_estimate, user_provided, label_verified, externally_verified]
+      required: [attribute, value, source]
+    GarmentAnalysis:
+      type: object
+      properties:
+        category: { type: string }
+        subtype: { type: string }
+        primaryColor: { type: string }
+        secondaryColors:
+          type: array
+          items: { type: string }
+        pattern: { type: string }
+        designDetails:
+          type: array
+          items: { type: string }
+        silhouette: { type: string }
+        fitEstimate: { type: string }
+        style: { type: string }
+        fabricEstimate: { type: string }
+        constructionFeatures:
+          type: array
+          items: { type: string }
+        occasions:
+          type: array
+          items: { type: string }
+        seasons:
+          type: array
+          items: { type: string }
+        confidenceNote: { type: string }
+        labelPhotoSuggestion: { type: boolean }
+        attributeSources:
+          type: array
+          items: { $ref: "#/components/schemas/AttributeSource" }
+      required:
+        - category
+        - subtype
+        - primaryColor
+        - secondaryColors
+        - pattern
+        - designDetails
+        - silhouette
+        - fitEstimate
+        - style
+        - fabricEstimate
+        - constructionFeatures
+        - occasions
+        - seasons
+        - confidenceNote
+        - labelPhotoSuggestion
+        - attributeSources
+    GarmentChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content: { type: string, minLength: 1, maxLength: 2000 }
+      required: [role, content]
+    GarmentChatInput:
+      type: object
+      properties:
+        analysis: { $ref: "#/components/schemas/GarmentAnalysis" }
+        messages:
+          type: array
+          minItems: 1
+          maxItems: 30
+          items: { $ref: "#/components/schemas/GarmentChatMessage" }
+        savedItemId:
+          type: ["string", "null"]
+      required: [analysis, messages]
+    GarmentChatReply:
+      type: object
+      properties:
+        reply: { type: string }
+      required: [reply]
+    WardrobeItemInput:
+      type: object
+      properties:
+        imagePath: { type: string, minLength: 1 }
+        additionalImagePaths:
+          type: array
+          maxItems: 4
+          items: { type: string, minLength: 1 }
+        category: { type: string }
+        subtype: { type: string }
+        primaryColor: { type: string }
+        secondaryColors:
+          type: array
+          items: { type: string }
+        pattern: { type: string }
+        designDetails:
+          type: array
+          items: { type: string }
+        silhouette: { type: string }
+        fit: { type: ["string", "null"] }
+        style: { type: string }
+        fabricEstimate: { type: ["string", "null"] }
+        fabricComposition: { type: ["string", "null"] }
+        constructionFeatures:
+          type: array
+          items: { type: string }
+        occasions:
+          type: array
+          items: { type: string }
+        seasons:
+          type: array
+          items: { type: string }
+        brand: { type: ["string", "null"] }
+        size: { type: ["string", "null"] }
+        purchasePrice: { type: ["number", "null"], minimum: 0 }
+        purchaseDate: { type: ["string", "null"], format: date }
+        notes: { type: ["string", "null"], maxLength: 2000 }
+        attributeSources:
+          type: array
+          items: { $ref: "#/components/schemas/AttributeSource" }
+        allowDuplicate: { type: boolean }
+      required:
+        - imagePath
+        - additionalImagePaths
+        - category
+        - subtype
+        - primaryColor
+        - secondaryColors
+        - pattern
+        - designDetails
+        - silhouette
+        - fit
+        - style
+        - fabricEstimate
+        - fabricComposition
+        - constructionFeatures
+        - occasions
+        - seasons
+        - brand
+        - size
+        - purchasePrice
+        - purchaseDate
+        - notes
+        - attributeSources
+        - allowDuplicate
+    WardrobeItem:
+      allOf:
+        - $ref: "#/components/schemas/WardrobeItemInput"
+        - type: object
+          properties:
+            id: { type: string }
+            createdAt: { type: string, format: date-time }
+          required: [id, createdAt]
+    WardrobeSummary:
+      type: object
+      properties:
+        totalItems: { type: integer }
+        categoryCounts:
+          type: object
+          additionalProperties: { type: integer }
+        recentItems:
+          type: array
+          items: { $ref: "#/components/schemas/WardrobeItem" }
+      required: [totalItems, categoryCounts, recentItems]
+    OutfitRequest:
+      type: object
+      properties:
+        itemId: { type: string, minLength: 1 }
+        prompt: { type: string, maxLength: 300 }
+      required: [itemId]
+    Outfit:
+      type: object
+      properties:
+        name: { type: string }
+        pieces:
+          type: array
+          items: { type: string }
+        rationale: { type: string }
+      required: [name, pieces, rationale]
+    OutfitResponse:
+      type: object
+      properties:
+        introduction: { type: string }
+        outfits:
+          type: array
+          items: { $ref: "#/components/schemas/Outfit" }
+      required: [introduction, outfits]
 
