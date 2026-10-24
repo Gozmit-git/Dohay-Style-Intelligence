@@ -134,6 +134,24 @@ export function BillingPage() {
       })}
     </section>
 
+    {!orderId && <section className="billing-order-panel" aria-label="GPay payment QR">
+      <div className="billing-qr-layout">
+        <div className="billing-qr-card">
+          <img src={qrImage} alt="DOHAY GPay QR — scan with any UPI app" />
+          <span>UPI ID</span>
+          <div className="billing-upi-id">{UPI_ID}</div>
+          <button type="button" className="billing-copy-button" onClick={() => void copyUpiId()}>
+            {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copied" : "Copy UPI ID"}
+          </button>
+        </div>
+        <div>
+          <h2>Pay with GPay or any UPI app.</h2>
+          <p className="billing-instruction">Select your plan and payment term below, then choose “Continue to payment” to see your exact amount, including any launch discount.</p>
+          <p className="billing-manual-review"><strong>Do not pay yet.</strong> Create your payment request first. After paying its exact amount, submit the transaction reference for manual verification. Your plan activates only after approval.</p>
+        </div>
+      </div>
+    </section>}
+
     <section className="billing-checkout-strip">
       <div>
         <span className="billing-section-label">PAYMENT TERM</span>
