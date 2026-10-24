@@ -193,3 +193,379 @@ export interface OutfitResponse {
   outfits: Outfit[];
 }
 
+export interface MvpProfileInput {
+  /** @maxItems 20 */
+  stylePreferences: string[];
+  /** @maxItems 20 */
+  preferredPalette: string[];
+  /** @maxItems 20 */
+  comfortRestrictions: string[];
+  /** @nullable */
+  defaultDressCode: string | null;
+  imageConsent: boolean;
+  /** @nullable */
+  selfiePath: string | null;
+}
+
+export type MvpProfile = MvpProfileInput & {
+  id: string;
+};
+
+export type MvpSourceSource = typeof MvpSourceSource[keyof typeof MvpSourceSource];
+
+
+export const MvpSourceSource = {
+  visually_observed: 'visually_observed',
+  AI_estimate: 'AI_estimate',
+  user_provided: 'user_provided',
+  label_verified: 'label_verified',
+  externally_verified: 'externally_verified',
+} as const;
+
+export interface MvpSource {
+  attribute: string;
+  value: string;
+  source: MvpSourceSource;
+}
+
+export type MvpAttributesCategory = typeof MvpAttributesCategory[keyof typeof MvpAttributesCategory];
+
+
+export const MvpAttributesCategory = {
+  top: 'top',
+  bottom: 'bottom',
+  one_piece: 'one_piece',
+  outerwear: 'outerwear',
+  footwear: 'footwear',
+  accessory: 'accessory',
+} as const;
+
+export type MvpAttributesFormality = typeof MvpAttributesFormality[keyof typeof MvpAttributesFormality];
+
+
+export const MvpAttributesFormality = {
+  casual: 'casual',
+  smart_casual: 'smart_casual',
+  business: 'business',
+  formal: 'formal',
+} as const;
+
+export type MvpAttributesLayerRole = typeof MvpAttributesLayerRole[keyof typeof MvpAttributesLayerRole];
+
+
+export const MvpAttributesLayerRole = {
+  base: 'base',
+  bottom: 'bottom',
+  one_piece: 'one_piece',
+  outer: 'outer',
+  footwear: 'footwear',
+  accessory: 'accessory',
+} as const;
+
+export interface MvpAttributes {
+  category: MvpAttributesCategory;
+  /** @maxLength 180 */
+  subcategory: string;
+  /**
+     * @minItems 1
+     * @maxItems 10
+     */
+  colors: string[];
+  /** @nullable */
+  pattern: string | null;
+  formality: MvpAttributesFormality;
+  layerRole: MvpAttributesLayerRole;
+  occasionTags: string[];
+  seasonTags: string[];
+  styleTags: string[];
+  /** @nullable */
+  fabricEstimate: string | null;
+  /**
+     * Exact composition only when supplied by the user or a readable label.
+     * @nullable
+     */
+  fabricComposition?: string | null;
+  /** @nullable */
+  brand: string | null;
+  /** @nullable */
+  size: string | null;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  notes: string | null;
+  isAvailable: boolean;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  confidence: number;
+  attributeSources: MvpSource[];
+}
+
+export interface MvpDraft {
+  id: string;
+  imagePaths: string[];
+  attributes: MvpAttributes;
+  /** @nullable */
+  confirmedItemId: string | null;
+}
+
+export interface MvpItem {
+  id: string;
+  imagePaths: string[];
+  attributes: MvpAttributes;
+  createdAt: string;
+}
+
+export type MvpJobStatus = typeof MvpJobStatus[keyof typeof MvpJobStatus];
+
+
+export const MvpJobStatus = {
+  pending: 'pending',
+  running: 'running',
+  completed: 'completed',
+  failed: 'failed',
+} as const;
+
+export interface MvpJob {
+  id: string;
+  status: MvpJobStatus;
+  drafts: MvpDraft[];
+  warnings: string[];
+  /** @nullable */
+  error: string | null;
+  /** @nullable */
+  threadId: string | null;
+  createdAt: string;
+}
+
+export interface MvpThread {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
+
+export type MvpContextDressCode = typeof MvpContextDressCode[keyof typeof MvpContextDressCode];
+
+
+export const MvpContextDressCode = {
+  casual: 'casual',
+  smart_casual: 'smart_casual',
+  business: 'business',
+  formal: 'formal',
+} as const;
+
+export interface MvpContext {
+  /**
+     * @minLength 1
+     * @maxLength 180
+     */
+  occasion: string;
+  dressCode: MvpContextDressCode;
+  exclusions?: string[];
+  /**
+     * An optional owned garment that must appear in every outfit.
+     * @nullable
+     */
+  includeItemId?: string | null;
+  /** @maxLength 500 */
+  activities?: string;
+  outdoor?: boolean;
+  /**
+     * @minimum -70
+     * @maximum 65
+     * @nullable
+     */
+  temperature?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 500
+     * @nullable
+     */
+  precipitation?: number | null;
+  /** @nullable */
+  weatherLabel?: string | null;
+  /**
+     * @minimum -90
+     * @maximum 90
+     * @nullable
+     */
+  latitude?: number | null;
+  /**
+     * @minimum -180
+     * @maximum 180
+     * @nullable
+     */
+  longitude?: number | null;
+  useWeather?: boolean;
+}
+
+export type MvpMessageRole = typeof MvpMessageRole[keyof typeof MvpMessageRole];
+
+
+export const MvpMessageRole = {
+  user: 'user',
+  assistant: 'assistant',
+} as const;
+
+export type MvpMessageIntent = typeof MvpMessageIntent[keyof typeof MvpMessageIntent];
+
+
+export const MvpMessageIntent = {
+  chat: 'chat',
+  recommend: 'recommend',
+  add_wardrobe: 'add_wardrobe',
+} as const;
+
+export interface MvpMessage {
+  id: string;
+  threadId: string;
+  role: MvpMessageRole;
+  content: string;
+  attachments: string[];
+  /** @nullable */
+  jobId: string | null;
+  outfitIds: string[];
+  intent: MvpMessageIntent;
+  /** @nullable */
+  suggestedContext: MvpContext | null;
+  createdAt: string;
+}
+
+export interface MvpScoreBreakdown {
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  occasionFit: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  compatibility: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  weather: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  style: number;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  layeringVariety: number;
+}
+
+export interface MvpOutfit {
+  id: string;
+  itemIds: string[];
+  context: MvpContext;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  score: number;
+  breakdown: MvpScoreBreakdown;
+  explanation: string;
+  saved: boolean;
+  /** @nullable */
+  feedback: string | null;
+  createdAt: string;
+}
+
+export type CreateMvpUploadBodyContentType = typeof CreateMvpUploadBodyContentType[keyof typeof CreateMvpUploadBodyContentType];
+
+
+export const CreateMvpUploadBodyContentType = {
+  'image/jpeg': 'image/jpeg',
+  'image/png': 'image/png',
+  'image/webp': 'image/webp',
+} as const;
+
+export type CreateMvpUploadBody = {
+  /**
+     * @minLength 1
+     * @maxLength 180
+     */
+  name: string;
+  /**
+     * @minimum 1
+     * @maximum 10485760
+     */
+  size: number;
+  contentType: CreateMvpUploadBodyContentType;
+};
+
+export type CreateMvpUpload200 = {
+  uploadURL: string;
+  objectPath: string;
+};
+
+export type StartMvpScanBody = {
+  /**
+     * @minItems 1
+     * @maxItems 10
+     */
+  objectPaths: string[];
+  /** @nullable */
+  threadId?: string | null;
+};
+
+export type ConfirmMvpItemBody = {
+  jobId: string;
+  draftId: string;
+  attributes: MvpAttributes;
+  allowDuplicate?: boolean;
+};
+
+export type DeleteMvpItem200 = {
+  deleted: boolean;
+};
+
+export type CreateMvpThreadBody = {
+  /** @maxLength 120 */
+  title?: string;
+};
+
+export type SendMvpMessageBody = {
+  /** @maxLength 4000 */
+  content: string;
+  /** @maxItems 10 */
+  objectPaths?: string[];
+};
+
+export type RecommendMvpOutfitsBody = {
+  context: MvpContext;
+  /** @nullable */
+  threadId?: string | null;
+};
+
+export type RecommendMvpOutfits200 = {
+  outfits: MvpOutfit[];
+  context: MvpContext;
+  warnings: string[];
+};
+
+export type SwapMvpOutfitItemBody = {
+  itemId: string;
+  replacementItemId: string;
+};
+
+export type RecordMvpOutfitFeedbackBodyAction = typeof RecordMvpOutfitFeedbackBodyAction[keyof typeof RecordMvpOutfitFeedbackBodyAction];
+
+
+export const RecordMvpOutfitFeedbackBodyAction = {
+  like: 'like',
+  dislike: 'dislike',
+  worn: 'worn',
+} as const;
+
+export type RecordMvpOutfitFeedbackBody = {
+  action: RecordMvpOutfitFeedbackBodyAction;
+};
+

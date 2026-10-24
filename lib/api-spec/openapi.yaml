@@ -147,6 +147,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OutfitResponse"
+  /v1/profile:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1profile"
+  /v1/uploads:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1uploads"
+  /v1/wardrobe/scan:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1wardrobe~1scan"
+  /v1/jobs/{jobId}:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1jobs~1{jobId}"
+  /v1/wardrobe:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1wardrobe"
+  /v1/wardrobe/{itemId}:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1wardrobe~1{itemId}"
+  /v1/threads:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1threads"
+  /v1/threads/{threadId}/messages:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1threads~1{threadId}~1messages"
+  /v1/outfits:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1outfits"
+  /v1/outfits/recommend:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1outfits~1recommend"
+  /v1/outfits/{outfitId}/save:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1outfits~1{outfitId}~1save"
+  /v1/outfits/{outfitId}/swap:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1outfits~1{outfitId}~1swap"
+  /v1/outfits/{outfitId}/feedback:
+    $ref: "./mvp.openapi.yaml#/paths/~1v1~1outfits~1{outfitId}~1feedback"
 components:
   schemas:
     HealthStatus:

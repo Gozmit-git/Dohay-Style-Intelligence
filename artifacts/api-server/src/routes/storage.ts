@@ -12,6 +12,7 @@ import {
   ObjectStorageService,
 } from '../lib/objectStorage';
 import { requireAuth } from '../middlewares/requireAuth';
+import { consentFor, MvpError } from '../lib/mvpData';
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -41,7 +42,12 @@ router.post(
     }
 
     try {
+      await consentFor(userId);
       const { name, size, contentType } = parsed.data;
+      if (size > 10 * 1024 * 1024) {
+        res.status(400).json({ error: 'Each image must be 10 MB or smaller.' });
+        return;
+      }
 
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       const objectPath =
@@ -61,7 +67,9 @@ router.post(
         }));
     } catch (error) {
       req.log.error({ err: error }, 'Error generating upload URL');
-      res.status(500).json({ error: 'Failed to generate upload URL' });
+      res.status(error instanceof MvpError ? error.status : 500).json({
+        error: error instanceof MvpError ? error.message : 'Failed to generate upload URL',
+      });
     }
   },
 );

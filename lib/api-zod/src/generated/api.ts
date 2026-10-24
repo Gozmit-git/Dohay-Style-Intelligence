@@ -333,3 +333,965 @@ export const RecommendOutfitsResponse = zod.object({
 })
 
 
+export const getMvpProfileResponseOneStylePreferencesMax = 20;
+
+export const getMvpProfileResponseOnePreferredPaletteMax = 20;
+
+export const getMvpProfileResponseOneComfortRestrictionsMax = 20;
+
+
+
+export const GetMvpProfileResponse = zod.object({
+  "stylePreferences": zod.array(zod.string()).max(getMvpProfileResponseOneStylePreferencesMax),
+  "preferredPalette": zod.array(zod.string()).max(getMvpProfileResponseOnePreferredPaletteMax),
+  "comfortRestrictions": zod.array(zod.string()).max(getMvpProfileResponseOneComfortRestrictionsMax),
+  "defaultDressCode": zod.string().nullable(),
+  "imageConsent": zod.boolean(),
+  "selfiePath": zod.string().nullable()
+}).and(zod.object({
+  "id": zod.string()
+}))
+
+
+export const saveMvpProfileBodyStylePreferencesMax = 20;
+
+export const saveMvpProfileBodyPreferredPaletteMax = 20;
+
+export const saveMvpProfileBodyComfortRestrictionsMax = 20;
+
+
+
+export const SaveMvpProfileBody = zod.object({
+  "stylePreferences": zod.array(zod.string()).max(saveMvpProfileBodyStylePreferencesMax),
+  "preferredPalette": zod.array(zod.string()).max(saveMvpProfileBodyPreferredPaletteMax),
+  "comfortRestrictions": zod.array(zod.string()).max(saveMvpProfileBodyComfortRestrictionsMax),
+  "defaultDressCode": zod.string().nullable(),
+  "imageConsent": zod.boolean(),
+  "selfiePath": zod.string().nullable()
+})
+
+export const saveMvpProfileResponseOneStylePreferencesMax = 20;
+
+export const saveMvpProfileResponseOnePreferredPaletteMax = 20;
+
+export const saveMvpProfileResponseOneComfortRestrictionsMax = 20;
+
+
+
+export const SaveMvpProfileResponse = zod.object({
+  "stylePreferences": zod.array(zod.string()).max(saveMvpProfileResponseOneStylePreferencesMax),
+  "preferredPalette": zod.array(zod.string()).max(saveMvpProfileResponseOnePreferredPaletteMax),
+  "comfortRestrictions": zod.array(zod.string()).max(saveMvpProfileResponseOneComfortRestrictionsMax),
+  "defaultDressCode": zod.string().nullable(),
+  "imageConsent": zod.boolean(),
+  "selfiePath": zod.string().nullable()
+}).and(zod.object({
+  "id": zod.string()
+}))
+
+
+export const createMvpUploadBodyNameMax = 180;
+
+export const createMvpUploadBodySizeMax = 10485760;
+
+
+
+export const CreateMvpUploadBody = zod.object({
+  "name": zod.string().min(1).max(createMvpUploadBodyNameMax),
+  "size": zod.number().int().min(1).max(createMvpUploadBodySizeMax),
+  "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
+})
+
+export const CreateMvpUploadResponse = zod.object({
+  "uploadURL": zod.string(),
+  "objectPath": zod.string()
+})
+
+
+export const startMvpScanBodyObjectPathsMax = 10;
+
+
+
+export const StartMvpScanBody = zod.object({
+  "objectPaths": zod.array(zod.string()).min(1).max(startMvpScanBodyObjectPathsMax),
+  "threadId": zod.string().nullish()
+})
+
+export const startMvpScanResponseDraftsItemAttributesSubcategoryMax = 180;
+
+export const startMvpScanResponseDraftsItemAttributesColorsMax = 10;
+
+export const startMvpScanResponseDraftsItemAttributesNotesMax = 2000;
+
+export const startMvpScanResponseDraftsItemAttributesConfidenceMin = 0;
+export const startMvpScanResponseDraftsItemAttributesConfidenceMax = 1;
+
+
+
+export const StartMvpScanResponse = zod.object({
+  "id": zod.string(),
+  "status": zod.enum(['pending', 'running', 'completed', 'failed']),
+  "drafts": zod.array(zod.object({
+  "id": zod.string(),
+  "imagePaths": zod.array(zod.string()),
+  "attributes": zod.object({
+  "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
+  "subcategory": zod.string().max(startMvpScanResponseDraftsItemAttributesSubcategoryMax),
+  "colors": zod.array(zod.string()).min(1).max(startMvpScanResponseDraftsItemAttributesColorsMax),
+  "pattern": zod.string().nullable(),
+  "formality": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "layerRole": zod.enum(['base', 'bottom', 'one_piece', 'outer', 'footwear', 'accessory']),
+  "occasionTags": zod.array(zod.string()),
+  "seasonTags": zod.array(zod.string()),
+  "styleTags": zod.array(zod.string()),
+  "fabricEstimate": zod.string().nullable(),
+  "fabricComposition": zod.string().nullish().describe('Exact composition only when supplied by the user or a readable label.'),
+  "brand": zod.string().nullable(),
+  "size": zod.string().nullable(),
+  "notes": zod.string().max(startMvpScanResponseDraftsItemAttributesNotesMax).nullable(),
+  "isAvailable": zod.boolean(),
+  "confidence": zod.number().min(startMvpScanResponseDraftsItemAttributesConfidenceMin).max(startMvpScanResponseDraftsItemAttributesConfidenceMax),
+  "attributeSources": zod.array(zod.object({
+  "attribute": zod.string(),
+  "value": zod.string(),
+  "source": zod.enum(['visually_observed', 'AI_estimate', 'user_provided', 'label_verified', 'externally_verified'])
+}))
+}),
+  "confirmedItemId": zod.string().nullable()
+})),
+  "warnings": zod.array(zod.string()),
+  "error": zod.string().nullable(),
+  "threadId": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+
+
+export const GetMvpJobParams = zod.object({
+  "jobId": zod.coerce.string()
+})
+
+export const getMvpJobResponseDraftsItemAttributesSubcategoryMax = 180;
+
+export const getMvpJobResponseDraftsItemAttributesColorsMax = 10;
+
+export const getMvpJobResponseDraftsItemAttributesNotesMax = 2000;
+
+export const getMvpJobResponseDraftsItemAttributesConfidenceMin = 0;
+export const getMvpJobResponseDraftsItemAttributesConfidenceMax = 1;
+
+
+
+export const GetMvpJobResponse = zod.object({
+  "id": zod.string(),
+  "status": zod.enum(['pending', 'running', 'completed', 'failed']),
+  "drafts": zod.array(zod.object({
+  "id": zod.string(),
+  "imagePaths": zod.array(zod.string()),
+  "attributes": zod.object({
+  "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
+  "subcategory": zod.string().max(getMvpJobResponseDraftsItemAttributesSubcategoryMax),
+  "colors": zod.array(zod.string()).min(1).max(getMvpJobResponseDraftsItemAttributesColorsMax),
+  "pattern": zod.string().nullable(),
+  "formality": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "layerRole": zod.enum(['base', 'bottom', 'one_piece', 'outer', 'footwear', 'accessory']),
+  "occasionTags": zod.array(zod.string()),
+  "seasonTags": zod.array(zod.string()),
+  "styleTags": zod.array(zod.string()),
+  "fabricEstimate": zod.string().nullable(),
+  "fabricComposition": zod.string().nullish().describe('Exact composition only when supplied by the user or a readable label.'),
+  "brand": zod.string().nullable(),
+  "size": zod.string().nullable(),
+  "notes": zod.string().max(getMvpJobResponseDraftsItemAttributesNotesMax).nullable(),
+  "isAvailable": zod.boolean(),
+  "confidence": zod.number().min(getMvpJobResponseDraftsItemAttributesConfidenceMin).max(getMvpJobResponseDraftsItemAttributesConfidenceMax),
+  "attributeSources": zod.array(zod.object({
+  "attribute": zod.string(),
+  "value": zod.string(),
+  "source": zod.enum(['visually_observed', 'AI_estimate', 'user_provided', 'label_verified', 'externally_verified'])
+}))
+}),
+  "confirmedItemId": zod.string().nullable()
+})),
+  "warnings": zod.array(zod.string()),
+  "error": zod.string().nullable(),
+  "threadId": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+
+
+export const listMvpWardrobeResponseAttributesSubcategoryMax = 180;
+
+export const listMvpWardrobeResponseAttributesColorsMax = 10;
+
+export const listMvpWardrobeResponseAttributesNotesMax = 2000;
+
+export const listMvpWardrobeResponseAttributesConfidenceMin = 0;
+export const listMvpWardrobeResponseAttributesConfidenceMax = 1;
+
+
+
+export const ListMvpWardrobeResponseItem = zod.object({
+  "id": zod.string(),
+  "imagePaths": zod.array(zod.string()),
+  "attributes": zod.object({
+  "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
+  "subcategory": zod.string().max(listMvpWardrobeResponseAttributesSubcategoryMax),
+  "colors": zod.array(zod.string()).min(1).max(listMvpWardrobeResponseAttributesColorsMax),
+  "pattern": zod.string().nullable(),
+  "formality": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "layerRole": zod.enum(['base', 'bottom', 'one_piece', 'outer', 'footwear', 'accessory']),
+  "occasionTags": zod.array(zod.string()),
+  "seasonTags": zod.array(zod.string()),
+  "styleTags": zod.array(zod.string()),
+  "fabricEstimate": zod.string().nullable(),
+  "fabricComposition": zod.string().nullish().describe('Exact composition only when supplied by the user or a readable label.'),
+  "brand": zod.string().nullable(),
+  "size": zod.string().nullable(),
+  "notes": zod.string().max(listMvpWardrobeResponseAttributesNotesMax).nullable(),
+  "isAvailable": zod.boolean(),
+  "confidence": zod.number().min(listMvpWardrobeResponseAttributesConfidenceMin).max(listMvpWardrobeResponseAttributesConfidenceMax),
+  "attributeSources": zod.array(zod.object({
+  "attribute": zod.string(),
+  "value": zod.string(),
+  "source": zod.enum(['visually_observed', 'AI_estimate', 'user_provided', 'label_verified', 'externally_verified'])
+}))
+}),
+  "createdAt": zod.string()
+})
+export const ListMvpWardrobeResponse = zod.array(ListMvpWardrobeResponseItem)
+
+
+export const confirmMvpItemBodyAttributesSubcategoryMax = 180;
+
+export const confirmMvpItemBodyAttributesColorsMax = 10;
+
+export const confirmMvpItemBodyAttributesNotesMax = 2000;
+
+export const confirmMvpItemBodyAttributesConfidenceMin = 0;
+export const confirmMvpItemBodyAttributesConfidenceMax = 1;
+
+export const confirmMvpItemBodyAllowDuplicateDefault = false;
+
+export const ConfirmMvpItemBody = zod.object({
+  "jobId": zod.string(),
+  "draftId": zod.string(),
+  "attributes": zod.object({
+  "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
+  "subcategory": zod.string().max(confirmMvpItemBodyAttributesSubcategoryMax),
+  "colors": zod.array(zod.string()).min(1).max(confirmMvpItemBodyAttributesColorsMax),
+  "pattern": zod.string().nullable(),
+  "formality": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "layerRole": zod.enum(['base', 'bottom', 'one_piece', 'outer', 'footwear', 'accessory']),
+  "occasionTags": zod.array(zod.string()),
+  "seasonTags": zod.array(zod.string()),
+  "styleTags": zod.array(zod.string()),
+  "fabricEstimate": zod.string().nullable(),
+  "fabricComposition": zod.string().nullish().describe('Exact composition only when supplied by the user or a readable label.'),
+  "brand": zod.string().nullable(),
+  "size": zod.string().nullable(),
+  "notes": zod.string().max(confirmMvpItemBodyAttributesNotesMax).nullable(),
+  "isAvailable": zod.boolean(),
+  "confidence": zod.number().min(confirmMvpItemBodyAttributesConfidenceMin).max(confirmMvpItemBodyAttributesConfidenceMax),
+  "attributeSources": zod.array(zod.object({
+  "attribute": zod.string(),
+  "value": zod.string(),
+  "source": zod.enum(['visually_observed', 'AI_estimate', 'user_provided', 'label_verified', 'externally_verified'])
+}))
+}),
+  "allowDuplicate": zod.boolean().default(confirmMvpItemBodyAllowDuplicateDefault)
+})
+
+export const confirmMvpItemResponseAttributesSubcategoryMax = 180;
+
+export const confirmMvpItemResponseAttributesColorsMax = 10;
+
+export const confirmMvpItemResponseAttributesNotesMax = 2000;
+
+export const confirmMvpItemResponseAttributesConfidenceMin = 0;
+export const confirmMvpItemResponseAttributesConfidenceMax = 1;
+
+
+
+export const ConfirmMvpItemResponse = zod.object({
+  "id": zod.string(),
+  "imagePaths": zod.array(zod.string()),
+  "attributes": zod.object({
+  "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
+  "subcategory": zod.string().max(confirmMvpItemResponseAttributesSubcategoryMax),
+  "colors": zod.array(zod.string()).min(1).max(confirmMvpItemResponseAttributesColorsMax),
+  "pattern": zod.string().nullable(),
+  "formality": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "layerRole": zod.enum(['base', 'bottom', 'one_piece', 'outer', 'footwear', 'accessory']),
+  "occasionTags": zod.array(zod.string()),
+  "seasonTags": zod.array(zod.string()),
+  "styleTags": zod.array(zod.string()),
+  "fabricEstimate": zod.string().nullable(),
+  "fabricComposition": zod.string().nullish().describe('Exact composition only when supplied by the user or a readable label.'),
+  "brand": zod.string().nullable(),
+  "size": zod.string().nullable(),
+  "notes": zod.string().max(confirmMvpItemResponseAttributesNotesMax).nullable(),
+  "isAvailable": zod.boolean(),
+  "confidence": zod.number().min(confirmMvpItemResponseAttributesConfidenceMin).max(confirmMvpItemResponseAttributesConfidenceMax),
+  "attributeSources": zod.array(zod.object({
+  "attribute": zod.string(),
+  "value": zod.string(),
+  "source": zod.enum(['visually_observed', 'AI_estimate', 'user_provided', 'label_verified', 'externally_verified'])
+}))
+}),
+  "createdAt": zod.string()
+})
+
+
+export const UpdateMvpItemParams = zod.object({
+  "itemId": zod.coerce.string()
+})
+
+export const updateMvpItemBodySubcategoryMax = 180;
+
+export const updateMvpItemBodyColorsMax = 10;
+
+export const updateMvpItemBodyNotesMax = 2000;
+
+export const updateMvpItemBodyConfidenceMin = 0;
+export const updateMvpItemBodyConfidenceMax = 1;
+
+
+
+export const UpdateMvpItemBody = zod.object({
+  "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
+  "subcategory": zod.string().max(updateMvpItemBodySubcategoryMax),
+  "colors": zod.array(zod.string()).min(1).max(updateMvpItemBodyColorsMax),
+  "pattern": zod.string().nullable(),
+  "formality": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "layerRole": zod.enum(['base', 'bottom', 'one_piece', 'outer', 'footwear', 'accessory']),
+  "occasionTags": zod.array(zod.string()),
+  "seasonTags": zod.array(zod.string()),
+  "styleTags": zod.array(zod.string()),
+  "fabricEstimate": zod.string().nullable(),
+  "fabricComposition": zod.string().nullish().describe('Exact composition only when supplied by the user or a readable label.'),
+  "brand": zod.string().nullable(),
+  "size": zod.string().nullable(),
+  "notes": zod.string().max(updateMvpItemBodyNotesMax).nullable(),
+  "isAvailable": zod.boolean(),
+  "confidence": zod.number().min(updateMvpItemBodyConfidenceMin).max(updateMvpItemBodyConfidenceMax),
+  "attributeSources": zod.array(zod.object({
+  "attribute": zod.string(),
+  "value": zod.string(),
+  "source": zod.enum(['visually_observed', 'AI_estimate', 'user_provided', 'label_verified', 'externally_verified'])
+}))
+})
+
+export const updateMvpItemResponseAttributesSubcategoryMax = 180;
+
+export const updateMvpItemResponseAttributesColorsMax = 10;
+
+export const updateMvpItemResponseAttributesNotesMax = 2000;
+
+export const updateMvpItemResponseAttributesConfidenceMin = 0;
+export const updateMvpItemResponseAttributesConfidenceMax = 1;
+
+
+
+export const UpdateMvpItemResponse = zod.object({
+  "id": zod.string(),
+  "imagePaths": zod.array(zod.string()),
+  "attributes": zod.object({
+  "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
+  "subcategory": zod.string().max(updateMvpItemResponseAttributesSubcategoryMax),
+  "colors": zod.array(zod.string()).min(1).max(updateMvpItemResponseAttributesColorsMax),
+  "pattern": zod.string().nullable(),
+  "formality": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "layerRole": zod.enum(['base', 'bottom', 'one_piece', 'outer', 'footwear', 'accessory']),
+  "occasionTags": zod.array(zod.string()),
+  "seasonTags": zod.array(zod.string()),
+  "styleTags": zod.array(zod.string()),
+  "fabricEstimate": zod.string().nullable(),
+  "fabricComposition": zod.string().nullish().describe('Exact composition only when supplied by the user or a readable label.'),
+  "brand": zod.string().nullable(),
+  "size": zod.string().nullable(),
+  "notes": zod.string().max(updateMvpItemResponseAttributesNotesMax).nullable(),
+  "isAvailable": zod.boolean(),
+  "confidence": zod.number().min(updateMvpItemResponseAttributesConfidenceMin).max(updateMvpItemResponseAttributesConfidenceMax),
+  "attributeSources": zod.array(zod.object({
+  "attribute": zod.string(),
+  "value": zod.string(),
+  "source": zod.enum(['visually_observed', 'AI_estimate', 'user_provided', 'label_verified', 'externally_verified'])
+}))
+}),
+  "createdAt": zod.string()
+})
+
+
+export const DeleteMvpItemParams = zod.object({
+  "itemId": zod.coerce.string()
+})
+
+export const DeleteMvpItemResponse = zod.object({
+  "deleted": zod.boolean()
+})
+
+
+export const ListMvpThreadsResponseItem = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListMvpThreadsResponse = zod.array(ListMvpThreadsResponseItem)
+
+
+export const createMvpThreadBodyTitleMax = 120;
+
+
+
+export const CreateMvpThreadBody = zod.object({
+  "title": zod.string().max(createMvpThreadBodyTitleMax).optional()
+})
+
+export const CreateMvpThreadResponse = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+export const ListMvpMessagesParams = zod.object({
+  "threadId": zod.coerce.string()
+})
+
+export const listMvpMessagesResponseSuggestedContextOneOccasionMax = 180;
+
+export const listMvpMessagesResponseSuggestedContextOneActivitiesMax = 500;
+
+export const listMvpMessagesResponseSuggestedContextOneTemperatureMin = -70;
+export const listMvpMessagesResponseSuggestedContextOneTemperatureMax = 65;
+
+export const listMvpMessagesResponseSuggestedContextOnePrecipitationMin = 0;
+export const listMvpMessagesResponseSuggestedContextOnePrecipitationMax = 500;
+
+export const listMvpMessagesResponseSuggestedContextOneLatitudeMin = -90;
+export const listMvpMessagesResponseSuggestedContextOneLatitudeMax = 90;
+
+export const listMvpMessagesResponseSuggestedContextOneLongitudeMin = -180;
+export const listMvpMessagesResponseSuggestedContextOneLongitudeMax = 180;
+
+
+
+export const ListMvpMessagesResponseItem = zod.object({
+  "id": zod.string(),
+  "threadId": zod.string(),
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string(),
+  "attachments": zod.array(zod.string()),
+  "jobId": zod.string().nullable(),
+  "outfitIds": zod.array(zod.string()),
+  "intent": zod.enum(['chat', 'recommend', 'add_wardrobe']),
+  "suggestedContext": zod.object({
+  "occasion": zod.string().min(1).max(listMvpMessagesResponseSuggestedContextOneOccasionMax),
+  "dressCode": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "exclusions": zod.array(zod.string()).optional(),
+  "includeItemId": zod.string().nullish().describe('An optional owned garment that must appear in every outfit.'),
+  "activities": zod.string().max(listMvpMessagesResponseSuggestedContextOneActivitiesMax).optional(),
+  "outdoor": zod.boolean().optional(),
+  "temperature": zod.number().min(listMvpMessagesResponseSuggestedContextOneTemperatureMin).max(listMvpMessagesResponseSuggestedContextOneTemperatureMax).nullish(),
+  "precipitation": zod.number().min(listMvpMessagesResponseSuggestedContextOnePrecipitationMin).max(listMvpMessagesResponseSuggestedContextOnePrecipitationMax).nullish(),
+  "weatherLabel": zod.string().nullish(),
+  "latitude": zod.number().min(listMvpMessagesResponseSuggestedContextOneLatitudeMin).max(listMvpMessagesResponseSuggestedContextOneLatitudeMax).nullish(),
+  "longitude": zod.number().min(listMvpMessagesResponseSuggestedContextOneLongitudeMin).max(listMvpMessagesResponseSuggestedContextOneLongitudeMax).nullish(),
+  "useWeather": zod.boolean().optional()
+}).nullable(),
+  "createdAt": zod.string()
+})
+export const ListMvpMessagesResponse = zod.array(ListMvpMessagesResponseItem)
+
+
+export const SendMvpMessageParams = zod.object({
+  "threadId": zod.coerce.string()
+})
+
+export const sendMvpMessageBodyContentMax = 4000;
+
+export const sendMvpMessageBodyObjectPathsMax = 10;
+
+
+
+export const SendMvpMessageBody = zod.object({
+  "content": zod.string().max(sendMvpMessageBodyContentMax),
+  "objectPaths": zod.array(zod.string()).max(sendMvpMessageBodyObjectPathsMax).optional()
+})
+
+export const sendMvpMessageResponseSuggestedContextOneOccasionMax = 180;
+
+export const sendMvpMessageResponseSuggestedContextOneActivitiesMax = 500;
+
+export const sendMvpMessageResponseSuggestedContextOneTemperatureMin = -70;
+export const sendMvpMessageResponseSuggestedContextOneTemperatureMax = 65;
+
+export const sendMvpMessageResponseSuggestedContextOnePrecipitationMin = 0;
+export const sendMvpMessageResponseSuggestedContextOnePrecipitationMax = 500;
+
+export const sendMvpMessageResponseSuggestedContextOneLatitudeMin = -90;
+export const sendMvpMessageResponseSuggestedContextOneLatitudeMax = 90;
+
+export const sendMvpMessageResponseSuggestedContextOneLongitudeMin = -180;
+export const sendMvpMessageResponseSuggestedContextOneLongitudeMax = 180;
+
+
+
+export const SendMvpMessageResponse = zod.object({
+  "id": zod.string(),
+  "threadId": zod.string(),
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string(),
+  "attachments": zod.array(zod.string()),
+  "jobId": zod.string().nullable(),
+  "outfitIds": zod.array(zod.string()),
+  "intent": zod.enum(['chat', 'recommend', 'add_wardrobe']),
+  "suggestedContext": zod.object({
+  "occasion": zod.string().min(1).max(sendMvpMessageResponseSuggestedContextOneOccasionMax),
+  "dressCode": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "exclusions": zod.array(zod.string()).optional(),
+  "includeItemId": zod.string().nullish().describe('An optional owned garment that must appear in every outfit.'),
+  "activities": zod.string().max(sendMvpMessageResponseSuggestedContextOneActivitiesMax).optional(),
+  "outdoor": zod.boolean().optional(),
+  "temperature": zod.number().min(sendMvpMessageResponseSuggestedContextOneTemperatureMin).max(sendMvpMessageResponseSuggestedContextOneTemperatureMax).nullish(),
+  "precipitation": zod.number().min(sendMvpMessageResponseSuggestedContextOnePrecipitationMin).max(sendMvpMessageResponseSuggestedContextOnePrecipitationMax).nullish(),
+  "weatherLabel": zod.string().nullish(),
+  "latitude": zod.number().min(sendMvpMessageResponseSuggestedContextOneLatitudeMin).max(sendMvpMessageResponseSuggestedContextOneLatitudeMax).nullish(),
+  "longitude": zod.number().min(sendMvpMessageResponseSuggestedContextOneLongitudeMin).max(sendMvpMessageResponseSuggestedContextOneLongitudeMax).nullish(),
+  "useWeather": zod.boolean().optional()
+}).nullable(),
+  "createdAt": zod.string()
+})
+
+
+export const listMvpOutfitsResponseContextOccasionMax = 180;
+
+export const listMvpOutfitsResponseContextActivitiesMax = 500;
+
+export const listMvpOutfitsResponseContextTemperatureMin = -70;
+export const listMvpOutfitsResponseContextTemperatureMax = 65;
+
+export const listMvpOutfitsResponseContextPrecipitationMin = 0;
+export const listMvpOutfitsResponseContextPrecipitationMax = 500;
+
+export const listMvpOutfitsResponseContextLatitudeMin = -90;
+export const listMvpOutfitsResponseContextLatitudeMax = 90;
+
+export const listMvpOutfitsResponseContextLongitudeMin = -180;
+export const listMvpOutfitsResponseContextLongitudeMax = 180;
+
+export const listMvpOutfitsResponseScoreMin = 0;
+export const listMvpOutfitsResponseScoreMax = 1;
+
+export const listMvpOutfitsResponseBreakdownOccasionFitMin = 0;
+export const listMvpOutfitsResponseBreakdownOccasionFitMax = 1;
+
+export const listMvpOutfitsResponseBreakdownCompatibilityMin = 0;
+export const listMvpOutfitsResponseBreakdownCompatibilityMax = 1;
+
+export const listMvpOutfitsResponseBreakdownWeatherMin = 0;
+export const listMvpOutfitsResponseBreakdownWeatherMax = 1;
+
+export const listMvpOutfitsResponseBreakdownStyleMin = 0;
+export const listMvpOutfitsResponseBreakdownStyleMax = 1;
+
+export const listMvpOutfitsResponseBreakdownLayeringVarietyMin = 0;
+export const listMvpOutfitsResponseBreakdownLayeringVarietyMax = 1;
+
+
+
+export const ListMvpOutfitsResponseItem = zod.object({
+  "id": zod.string(),
+  "itemIds": zod.array(zod.string()),
+  "context": zod.object({
+  "occasion": zod.string().min(1).max(listMvpOutfitsResponseContextOccasionMax),
+  "dressCode": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "exclusions": zod.array(zod.string()).optional(),
+  "includeItemId": zod.string().nullish().describe('An optional owned garment that must appear in every outfit.'),
+  "activities": zod.string().max(listMvpOutfitsResponseContextActivitiesMax).optional(),
+  "outdoor": zod.boolean().optional(),
+  "temperature": zod.number().min(listMvpOutfitsResponseContextTemperatureMin).max(listMvpOutfitsResponseContextTemperatureMax).nullish(),
+  "precipitation": zod.number().min(listMvpOutfitsResponseContextPrecipitationMin).max(listMvpOutfitsResponseContextPrecipitationMax).nullish(),
+  "weatherLabel": zod.string().nullish(),
+  "latitude": zod.number().min(listMvpOutfitsResponseContextLatitudeMin).max(listMvpOutfitsResponseContextLatitudeMax).nullish(),
+  "longitude": zod.number().min(listMvpOutfitsResponseContextLongitudeMin).max(listMvpOutfitsResponseContextLongitudeMax).nullish(),
+  "useWeather": zod.boolean().optional()
+}),
+  "score": zod.number().min(listMvpOutfitsResponseScoreMin).max(listMvpOutfitsResponseScoreMax),
+  "breakdown": zod.object({
+  "occasionFit": zod.number().min(listMvpOutfitsResponseBreakdownOccasionFitMin).max(listMvpOutfitsResponseBreakdownOccasionFitMax),
+  "compatibility": zod.number().min(listMvpOutfitsResponseBreakdownCompatibilityMin).max(listMvpOutfitsResponseBreakdownCompatibilityMax),
+  "weather": zod.number().min(listMvpOutfitsResponseBreakdownWeatherMin).max(listMvpOutfitsResponseBreakdownWeatherMax),
+  "style": zod.number().min(listMvpOutfitsResponseBreakdownStyleMin).max(listMvpOutfitsResponseBreakdownStyleMax),
+  "layeringVariety": zod.number().min(listMvpOutfitsResponseBreakdownLayeringVarietyMin).max(listMvpOutfitsResponseBreakdownLayeringVarietyMax)
+}),
+  "explanation": zod.string(),
+  "saved": zod.boolean(),
+  "feedback": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+export const ListMvpOutfitsResponse = zod.array(ListMvpOutfitsResponseItem)
+
+
+export const recommendMvpOutfitsBodyContextOccasionMax = 180;
+
+export const recommendMvpOutfitsBodyContextActivitiesMax = 500;
+
+export const recommendMvpOutfitsBodyContextTemperatureMin = -70;
+export const recommendMvpOutfitsBodyContextTemperatureMax = 65;
+
+export const recommendMvpOutfitsBodyContextPrecipitationMin = 0;
+export const recommendMvpOutfitsBodyContextPrecipitationMax = 500;
+
+export const recommendMvpOutfitsBodyContextLatitudeMin = -90;
+export const recommendMvpOutfitsBodyContextLatitudeMax = 90;
+
+export const recommendMvpOutfitsBodyContextLongitudeMin = -180;
+export const recommendMvpOutfitsBodyContextLongitudeMax = 180;
+
+
+
+export const RecommendMvpOutfitsBody = zod.object({
+  "context": zod.object({
+  "occasion": zod.string().min(1).max(recommendMvpOutfitsBodyContextOccasionMax),
+  "dressCode": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "exclusions": zod.array(zod.string()).optional(),
+  "includeItemId": zod.string().nullish().describe('An optional owned garment that must appear in every outfit.'),
+  "activities": zod.string().max(recommendMvpOutfitsBodyContextActivitiesMax).optional(),
+  "outdoor": zod.boolean().optional(),
+  "temperature": zod.number().min(recommendMvpOutfitsBodyContextTemperatureMin).max(recommendMvpOutfitsBodyContextTemperatureMax).nullish(),
+  "precipitation": zod.number().min(recommendMvpOutfitsBodyContextPrecipitationMin).max(recommendMvpOutfitsBodyContextPrecipitationMax).nullish(),
+  "weatherLabel": zod.string().nullish(),
+  "latitude": zod.number().min(recommendMvpOutfitsBodyContextLatitudeMin).max(recommendMvpOutfitsBodyContextLatitudeMax).nullish(),
+  "longitude": zod.number().min(recommendMvpOutfitsBodyContextLongitudeMin).max(recommendMvpOutfitsBodyContextLongitudeMax).nullish(),
+  "useWeather": zod.boolean().optional()
+}),
+  "threadId": zod.string().nullish()
+})
+
+export const recommendMvpOutfitsResponseOutfitsItemContextOccasionMax = 180;
+
+export const recommendMvpOutfitsResponseOutfitsItemContextActivitiesMax = 500;
+
+export const recommendMvpOutfitsResponseOutfitsItemContextTemperatureMin = -70;
+export const recommendMvpOutfitsResponseOutfitsItemContextTemperatureMax = 65;
+
+export const recommendMvpOutfitsResponseOutfitsItemContextPrecipitationMin = 0;
+export const recommendMvpOutfitsResponseOutfitsItemContextPrecipitationMax = 500;
+
+export const recommendMvpOutfitsResponseOutfitsItemContextLatitudeMin = -90;
+export const recommendMvpOutfitsResponseOutfitsItemContextLatitudeMax = 90;
+
+export const recommendMvpOutfitsResponseOutfitsItemContextLongitudeMin = -180;
+export const recommendMvpOutfitsResponseOutfitsItemContextLongitudeMax = 180;
+
+export const recommendMvpOutfitsResponseOutfitsItemScoreMin = 0;
+export const recommendMvpOutfitsResponseOutfitsItemScoreMax = 1;
+
+export const recommendMvpOutfitsResponseOutfitsItemBreakdownOccasionFitMin = 0;
+export const recommendMvpOutfitsResponseOutfitsItemBreakdownOccasionFitMax = 1;
+
+export const recommendMvpOutfitsResponseOutfitsItemBreakdownCompatibilityMin = 0;
+export const recommendMvpOutfitsResponseOutfitsItemBreakdownCompatibilityMax = 1;
+
+export const recommendMvpOutfitsResponseOutfitsItemBreakdownWeatherMin = 0;
+export const recommendMvpOutfitsResponseOutfitsItemBreakdownWeatherMax = 1;
+
+export const recommendMvpOutfitsResponseOutfitsItemBreakdownStyleMin = 0;
+export const recommendMvpOutfitsResponseOutfitsItemBreakdownStyleMax = 1;
+
+export const recommendMvpOutfitsResponseOutfitsItemBreakdownLayeringVarietyMin = 0;
+export const recommendMvpOutfitsResponseOutfitsItemBreakdownLayeringVarietyMax = 1;
+
+export const recommendMvpOutfitsResponseContextOccasionMax = 180;
+
+export const recommendMvpOutfitsResponseContextActivitiesMax = 500;
+
+export const recommendMvpOutfitsResponseContextTemperatureMin = -70;
+export const recommendMvpOutfitsResponseContextTemperatureMax = 65;
+
+export const recommendMvpOutfitsResponseContextPrecipitationMin = 0;
+export const recommendMvpOutfitsResponseContextPrecipitationMax = 500;
+
+export const recommendMvpOutfitsResponseContextLatitudeMin = -90;
+export const recommendMvpOutfitsResponseContextLatitudeMax = 90;
+
+export const recommendMvpOutfitsResponseContextLongitudeMin = -180;
+export const recommendMvpOutfitsResponseContextLongitudeMax = 180;
+
+
+
+export const RecommendMvpOutfitsResponse = zod.object({
+  "outfits": zod.array(zod.object({
+  "id": zod.string(),
+  "itemIds": zod.array(zod.string()),
+  "context": zod.object({
+  "occasion": zod.string().min(1).max(recommendMvpOutfitsResponseOutfitsItemContextOccasionMax),
+  "dressCode": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "exclusions": zod.array(zod.string()).optional(),
+  "includeItemId": zod.string().nullish().describe('An optional owned garment that must appear in every outfit.'),
+  "activities": zod.string().max(recommendMvpOutfitsResponseOutfitsItemContextActivitiesMax).optional(),
+  "outdoor": zod.boolean().optional(),
+  "temperature": zod.number().min(recommendMvpOutfitsResponseOutfitsItemContextTemperatureMin).max(recommendMvpOutfitsResponseOutfitsItemContextTemperatureMax).nullish(),
+  "precipitation": zod.number().min(recommendMvpOutfitsResponseOutfitsItemContextPrecipitationMin).max(recommendMvpOutfitsResponseOutfitsItemContextPrecipitationMax).nullish(),
+  "weatherLabel": zod.string().nullish(),
+  "latitude": zod.number().min(recommendMvpOutfitsResponseOutfitsItemContextLatitudeMin).max(recommendMvpOutfitsResponseOutfitsItemContextLatitudeMax).nullish(),
+  "longitude": zod.number().min(recommendMvpOutfitsResponseOutfitsItemContextLongitudeMin).max(recommendMvpOutfitsResponseOutfitsItemContextLongitudeMax).nullish(),
+  "useWeather": zod.boolean().optional()
+}),
+  "score": zod.number().min(recommendMvpOutfitsResponseOutfitsItemScoreMin).max(recommendMvpOutfitsResponseOutfitsItemScoreMax),
+  "breakdown": zod.object({
+  "occasionFit": zod.number().min(recommendMvpOutfitsResponseOutfitsItemBreakdownOccasionFitMin).max(recommendMvpOutfitsResponseOutfitsItemBreakdownOccasionFitMax),
+  "compatibility": zod.number().min(recommendMvpOutfitsResponseOutfitsItemBreakdownCompatibilityMin).max(recommendMvpOutfitsResponseOutfitsItemBreakdownCompatibilityMax),
+  "weather": zod.number().min(recommendMvpOutfitsResponseOutfitsItemBreakdownWeatherMin).max(recommendMvpOutfitsResponseOutfitsItemBreakdownWeatherMax),
+  "style": zod.number().min(recommendMvpOutfitsResponseOutfitsItemBreakdownStyleMin).max(recommendMvpOutfitsResponseOutfitsItemBreakdownStyleMax),
+  "layeringVariety": zod.number().min(recommendMvpOutfitsResponseOutfitsItemBreakdownLayeringVarietyMin).max(recommendMvpOutfitsResponseOutfitsItemBreakdownLayeringVarietyMax)
+}),
+  "explanation": zod.string(),
+  "saved": zod.boolean(),
+  "feedback": zod.string().nullable(),
+  "createdAt": zod.string()
+})),
+  "context": zod.object({
+  "occasion": zod.string().min(1).max(recommendMvpOutfitsResponseContextOccasionMax),
+  "dressCode": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "exclusions": zod.array(zod.string()).optional(),
+  "includeItemId": zod.string().nullish().describe('An optional owned garment that must appear in every outfit.'),
+  "activities": zod.string().max(recommendMvpOutfitsResponseContextActivitiesMax).optional(),
+  "outdoor": zod.boolean().optional(),
+  "temperature": zod.number().min(recommendMvpOutfitsResponseContextTemperatureMin).max(recommendMvpOutfitsResponseContextTemperatureMax).nullish(),
+  "precipitation": zod.number().min(recommendMvpOutfitsResponseContextPrecipitationMin).max(recommendMvpOutfitsResponseContextPrecipitationMax).nullish(),
+  "weatherLabel": zod.string().nullish(),
+  "latitude": zod.number().min(recommendMvpOutfitsResponseContextLatitudeMin).max(recommendMvpOutfitsResponseContextLatitudeMax).nullish(),
+  "longitude": zod.number().min(recommendMvpOutfitsResponseContextLongitudeMin).max(recommendMvpOutfitsResponseContextLongitudeMax).nullish(),
+  "useWeather": zod.boolean().optional()
+}),
+  "warnings": zod.array(zod.string())
+})
+
+
+export const SaveMvpOutfitParams = zod.object({
+  "outfitId": zod.coerce.string()
+})
+
+export const saveMvpOutfitResponseContextOccasionMax = 180;
+
+export const saveMvpOutfitResponseContextActivitiesMax = 500;
+
+export const saveMvpOutfitResponseContextTemperatureMin = -70;
+export const saveMvpOutfitResponseContextTemperatureMax = 65;
+
+export const saveMvpOutfitResponseContextPrecipitationMin = 0;
+export const saveMvpOutfitResponseContextPrecipitationMax = 500;
+
+export const saveMvpOutfitResponseContextLatitudeMin = -90;
+export const saveMvpOutfitResponseContextLatitudeMax = 90;
+
+export const saveMvpOutfitResponseContextLongitudeMin = -180;
+export const saveMvpOutfitResponseContextLongitudeMax = 180;
+
+export const saveMvpOutfitResponseScoreMin = 0;
+export const saveMvpOutfitResponseScoreMax = 1;
+
+export const saveMvpOutfitResponseBreakdownOccasionFitMin = 0;
+export const saveMvpOutfitResponseBreakdownOccasionFitMax = 1;
+
+export const saveMvpOutfitResponseBreakdownCompatibilityMin = 0;
+export const saveMvpOutfitResponseBreakdownCompatibilityMax = 1;
+
+export const saveMvpOutfitResponseBreakdownWeatherMin = 0;
+export const saveMvpOutfitResponseBreakdownWeatherMax = 1;
+
+export const saveMvpOutfitResponseBreakdownStyleMin = 0;
+export const saveMvpOutfitResponseBreakdownStyleMax = 1;
+
+export const saveMvpOutfitResponseBreakdownLayeringVarietyMin = 0;
+export const saveMvpOutfitResponseBreakdownLayeringVarietyMax = 1;
+
+
+
+export const SaveMvpOutfitResponse = zod.object({
+  "id": zod.string(),
+  "itemIds": zod.array(zod.string()),
+  "context": zod.object({
+  "occasion": zod.string().min(1).max(saveMvpOutfitResponseContextOccasionMax),
+  "dressCode": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "exclusions": zod.array(zod.string()).optional(),
+  "includeItemId": zod.string().nullish().describe('An optional owned garment that must appear in every outfit.'),
+  "activities": zod.string().max(saveMvpOutfitResponseContextActivitiesMax).optional(),
+  "outdoor": zod.boolean().optional(),
+  "temperature": zod.number().min(saveMvpOutfitResponseContextTemperatureMin).max(saveMvpOutfitResponseContextTemperatureMax).nullish(),
+  "precipitation": zod.number().min(saveMvpOutfitResponseContextPrecipitationMin).max(saveMvpOutfitResponseContextPrecipitationMax).nullish(),
+  "weatherLabel": zod.string().nullish(),
+  "latitude": zod.number().min(saveMvpOutfitResponseContextLatitudeMin).max(saveMvpOutfitResponseContextLatitudeMax).nullish(),
+  "longitude": zod.number().min(saveMvpOutfitResponseContextLongitudeMin).max(saveMvpOutfitResponseContextLongitudeMax).nullish(),
+  "useWeather": zod.boolean().optional()
+}),
+  "score": zod.number().min(saveMvpOutfitResponseScoreMin).max(saveMvpOutfitResponseScoreMax),
+  "breakdown": zod.object({
+  "occasionFit": zod.number().min(saveMvpOutfitResponseBreakdownOccasionFitMin).max(saveMvpOutfitResponseBreakdownOccasionFitMax),
+  "compatibility": zod.number().min(saveMvpOutfitResponseBreakdownCompatibilityMin).max(saveMvpOutfitResponseBreakdownCompatibilityMax),
+  "weather": zod.number().min(saveMvpOutfitResponseBreakdownWeatherMin).max(saveMvpOutfitResponseBreakdownWeatherMax),
+  "style": zod.number().min(saveMvpOutfitResponseBreakdownStyleMin).max(saveMvpOutfitResponseBreakdownStyleMax),
+  "layeringVariety": zod.number().min(saveMvpOutfitResponseBreakdownLayeringVarietyMin).max(saveMvpOutfitResponseBreakdownLayeringVarietyMax)
+}),
+  "explanation": zod.string(),
+  "saved": zod.boolean(),
+  "feedback": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+
+
+export const SwapMvpOutfitItemParams = zod.object({
+  "outfitId": zod.coerce.string()
+})
+
+export const SwapMvpOutfitItemBody = zod.object({
+  "itemId": zod.string(),
+  "replacementItemId": zod.string()
+})
+
+export const swapMvpOutfitItemResponseContextOccasionMax = 180;
+
+export const swapMvpOutfitItemResponseContextActivitiesMax = 500;
+
+export const swapMvpOutfitItemResponseContextTemperatureMin = -70;
+export const swapMvpOutfitItemResponseContextTemperatureMax = 65;
+
+export const swapMvpOutfitItemResponseContextPrecipitationMin = 0;
+export const swapMvpOutfitItemResponseContextPrecipitationMax = 500;
+
+export const swapMvpOutfitItemResponseContextLatitudeMin = -90;
+export const swapMvpOutfitItemResponseContextLatitudeMax = 90;
+
+export const swapMvpOutfitItemResponseContextLongitudeMin = -180;
+export const swapMvpOutfitItemResponseContextLongitudeMax = 180;
+
+export const swapMvpOutfitItemResponseScoreMin = 0;
+export const swapMvpOutfitItemResponseScoreMax = 1;
+
+export const swapMvpOutfitItemResponseBreakdownOccasionFitMin = 0;
+export const swapMvpOutfitItemResponseBreakdownOccasionFitMax = 1;
+
+export const swapMvpOutfitItemResponseBreakdownCompatibilityMin = 0;
+export const swapMvpOutfitItemResponseBreakdownCompatibilityMax = 1;
+
+export const swapMvpOutfitItemResponseBreakdownWeatherMin = 0;
+export const swapMvpOutfitItemResponseBreakdownWeatherMax = 1;
+
+export const swapMvpOutfitItemResponseBreakdownStyleMin = 0;
+export const swapMvpOutfitItemResponseBreakdownStyleMax = 1;
+
+export const swapMvpOutfitItemResponseBreakdownLayeringVarietyMin = 0;
+export const swapMvpOutfitItemResponseBreakdownLayeringVarietyMax = 1;
+
+
+
+export const SwapMvpOutfitItemResponse = zod.object({
+  "id": zod.string(),
+  "itemIds": zod.array(zod.string()),
+  "context": zod.object({
+  "occasion": zod.string().min(1).max(swapMvpOutfitItemResponseContextOccasionMax),
+  "dressCode": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "exclusions": zod.array(zod.string()).optional(),
+  "includeItemId": zod.string().nullish().describe('An optional owned garment that must appear in every outfit.'),
+  "activities": zod.string().max(swapMvpOutfitItemResponseContextActivitiesMax).optional(),
+  "outdoor": zod.boolean().optional(),
+  "temperature": zod.number().min(swapMvpOutfitItemResponseContextTemperatureMin).max(swapMvpOutfitItemResponseContextTemperatureMax).nullish(),
+  "precipitation": zod.number().min(swapMvpOutfitItemResponseContextPrecipitationMin).max(swapMvpOutfitItemResponseContextPrecipitationMax).nullish(),
+  "weatherLabel": zod.string().nullish(),
+  "latitude": zod.number().min(swapMvpOutfitItemResponseContextLatitudeMin).max(swapMvpOutfitItemResponseContextLatitudeMax).nullish(),
+  "longitude": zod.number().min(swapMvpOutfitItemResponseContextLongitudeMin).max(swapMvpOutfitItemResponseContextLongitudeMax).nullish(),
+  "useWeather": zod.boolean().optional()
+}),
+  "score": zod.number().min(swapMvpOutfitItemResponseScoreMin).max(swapMvpOutfitItemResponseScoreMax),
+  "breakdown": zod.object({
+  "occasionFit": zod.number().min(swapMvpOutfitItemResponseBreakdownOccasionFitMin).max(swapMvpOutfitItemResponseBreakdownOccasionFitMax),
+  "compatibility": zod.number().min(swapMvpOutfitItemResponseBreakdownCompatibilityMin).max(swapMvpOutfitItemResponseBreakdownCompatibilityMax),
+  "weather": zod.number().min(swapMvpOutfitItemResponseBreakdownWeatherMin).max(swapMvpOutfitItemResponseBreakdownWeatherMax),
+  "style": zod.number().min(swapMvpOutfitItemResponseBreakdownStyleMin).max(swapMvpOutfitItemResponseBreakdownStyleMax),
+  "layeringVariety": zod.number().min(swapMvpOutfitItemResponseBreakdownLayeringVarietyMin).max(swapMvpOutfitItemResponseBreakdownLayeringVarietyMax)
+}),
+  "explanation": zod.string(),
+  "saved": zod.boolean(),
+  "feedback": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+
+
+export const RecordMvpOutfitFeedbackParams = zod.object({
+  "outfitId": zod.coerce.string()
+})
+
+export const RecordMvpOutfitFeedbackBody = zod.object({
+  "action": zod.enum(['like', 'dislike', 'worn'])
+})
+
+export const recordMvpOutfitFeedbackResponseContextOccasionMax = 180;
+
+export const recordMvpOutfitFeedbackResponseContextActivitiesMax = 500;
+
+export const recordMvpOutfitFeedbackResponseContextTemperatureMin = -70;
+export const recordMvpOutfitFeedbackResponseContextTemperatureMax = 65;
+
+export const recordMvpOutfitFeedbackResponseContextPrecipitationMin = 0;
+export const recordMvpOutfitFeedbackResponseContextPrecipitationMax = 500;
+
+export const recordMvpOutfitFeedbackResponseContextLatitudeMin = -90;
+export const recordMvpOutfitFeedbackResponseContextLatitudeMax = 90;
+
+export const recordMvpOutfitFeedbackResponseContextLongitudeMin = -180;
+export const recordMvpOutfitFeedbackResponseContextLongitudeMax = 180;
+
+export const recordMvpOutfitFeedbackResponseScoreMin = 0;
+export const recordMvpOutfitFeedbackResponseScoreMax = 1;
+
+export const recordMvpOutfitFeedbackResponseBreakdownOccasionFitMin = 0;
+export const recordMvpOutfitFeedbackResponseBreakdownOccasionFitMax = 1;
+
+export const recordMvpOutfitFeedbackResponseBreakdownCompatibilityMin = 0;
+export const recordMvpOutfitFeedbackResponseBreakdownCompatibilityMax = 1;
+
+export const recordMvpOutfitFeedbackResponseBreakdownWeatherMin = 0;
+export const recordMvpOutfitFeedbackResponseBreakdownWeatherMax = 1;
+
+export const recordMvpOutfitFeedbackResponseBreakdownStyleMin = 0;
+export const recordMvpOutfitFeedbackResponseBreakdownStyleMax = 1;
+
+export const recordMvpOutfitFeedbackResponseBreakdownLayeringVarietyMin = 0;
+export const recordMvpOutfitFeedbackResponseBreakdownLayeringVarietyMax = 1;
+
+
+
+export const RecordMvpOutfitFeedbackResponse = zod.object({
+  "id": zod.string(),
+  "itemIds": zod.array(zod.string()),
+  "context": zod.object({
+  "occasion": zod.string().min(1).max(recordMvpOutfitFeedbackResponseContextOccasionMax),
+  "dressCode": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "exclusions": zod.array(zod.string()).optional(),
+  "includeItemId": zod.string().nullish().describe('An optional owned garment that must appear in every outfit.'),
+  "activities": zod.string().max(recordMvpOutfitFeedbackResponseContextActivitiesMax).optional(),
+  "outdoor": zod.boolean().optional(),
+  "temperature": zod.number().min(recordMvpOutfitFeedbackResponseContextTemperatureMin).max(recordMvpOutfitFeedbackResponseContextTemperatureMax).nullish(),
+  "precipitation": zod.number().min(recordMvpOutfitFeedbackResponseContextPrecipitationMin).max(recordMvpOutfitFeedbackResponseContextPrecipitationMax).nullish(),
+  "weatherLabel": zod.string().nullish(),
+  "latitude": zod.number().min(recordMvpOutfitFeedbackResponseContextLatitudeMin).max(recordMvpOutfitFeedbackResponseContextLatitudeMax).nullish(),
+  "longitude": zod.number().min(recordMvpOutfitFeedbackResponseContextLongitudeMin).max(recordMvpOutfitFeedbackResponseContextLongitudeMax).nullish(),
+  "useWeather": zod.boolean().optional()
+}),
+  "score": zod.number().min(recordMvpOutfitFeedbackResponseScoreMin).max(recordMvpOutfitFeedbackResponseScoreMax),
+  "breakdown": zod.object({
+  "occasionFit": zod.number().min(recordMvpOutfitFeedbackResponseBreakdownOccasionFitMin).max(recordMvpOutfitFeedbackResponseBreakdownOccasionFitMax),
+  "compatibility": zod.number().min(recordMvpOutfitFeedbackResponseBreakdownCompatibilityMin).max(recordMvpOutfitFeedbackResponseBreakdownCompatibilityMax),
+  "weather": zod.number().min(recordMvpOutfitFeedbackResponseBreakdownWeatherMin).max(recordMvpOutfitFeedbackResponseBreakdownWeatherMax),
+  "style": zod.number().min(recordMvpOutfitFeedbackResponseBreakdownStyleMin).max(recordMvpOutfitFeedbackResponseBreakdownStyleMax),
+  "layeringVariety": zod.number().min(recordMvpOutfitFeedbackResponseBreakdownLayeringVarietyMin).max(recordMvpOutfitFeedbackResponseBreakdownLayeringVarietyMax)
+}),
+  "explanation": zod.string(),
+  "saved": zod.boolean(),
+  "feedback": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+
+

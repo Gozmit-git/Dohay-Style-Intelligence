@@ -17,6 +17,7 @@ export default defineConfig({
   "api-client-react": {
     input: {
       target: "./openapi.yaml",
+      parserOptions: { externalRefs: { allow: ["./mvp.openapi.yaml"] } },
       override: {
         transformer: titleTransformer,
       },
@@ -30,6 +31,7 @@ export default defineConfig({
       clean: true,
       prettier: true,
       override: {
+        query: { version: 5 },
         fetch: {
           includeHttpResponseReturnType: false,
         },
@@ -43,6 +45,7 @@ export default defineConfig({
   zod: {
     input: {
       target: "./openapi.yaml",
+      parserOptions: { externalRefs: { allow: ["./mvp.openapi.yaml"] } },
       override: {
         transformer: titleTransformer,
       },

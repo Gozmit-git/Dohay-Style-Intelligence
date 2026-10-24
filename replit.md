@@ -1,6 +1,6 @@
 # DOHAY Wardrobe
 
-A private, camera-first wardrobe with garment analysis, conversational refinement, explicit save approval, and outfit ideas.
+A private, chatbot-first personal styling app. DOHAY chat is the main interface; wardrobe review, profile preferences, and saved outfit boards support that conversation.
 
 ## Run & Operate
 
@@ -23,12 +23,14 @@ A private, camera-first wardrobe with garment analysis, conversational refinemen
 
 ## Where things live
 
-- `artifacts/dohay-wardrobe/src/App.tsx` — landing, authentication, wardrobe, capture, review, chat, and outfit UI
+- `artifacts/dohay-wardrobe/src/App.tsx` — landing, authentication, navigation, and page routing
+- `artifacts/dohay-wardrobe/src/pages/` — persistent chat, wardrobe management, profile, and saved outfits
 - `artifacts/dohay-wardrobe/src/index.css` — warm editorial theme and responsive layout
 - `artifacts/api-server/src/routes/` — authenticated storage and wardrobe APIs
-- `artifacts/api-server/fastapi/main.py` — vision analysis, garment conversation, and outfit generation
-- `lib/db/src/schema/wardrobe.ts` — user-owned uploads and saved garments
-- `lib/api-spec/openapi.yaml` — public API contract; regenerate rather than editing generated clients
+- `artifacts/api-server/fastapi/main.py` — vision detection and conversational styling
+- `artifacts/api-server/src/lib/outfitEngine.ts` — deterministic, owned-item outfit assembly and scoring
+- `lib/db/src/schema/` — private uploads, garments, profiles, threads, scan jobs, outfits, and feedback
+- `lib/api-spec/openapi.yaml` and `mvp.openapi.yaml` — public API contract; regenerate rather than editing generated clients
 
 ## Architecture decisions
 
@@ -36,12 +38,18 @@ A private, camera-first wardrobe with garment analysis, conversational refinemen
 - FastAPI binds only to loopback. Public clients call the gateway, which authenticates users and loads only their private images and records.
 - Photos may upload privately for analysis before approval; a final wardrobe record is created only by the explicit save action.
 - Treat visual guesses as estimates. Exact composition, brand, price, GSM, and quality must not be asserted from appearance alone.
+- Keep DOHAY branding and the existing app. Chat remains the primary interface because the user explicitly chose a full chatbot-first MVP, not a separate FitCheck product.
+- Outfit boards use confirmed, available, owned garments only. Apply occasion, dress-code, exclusion, and layering constraints before ranking; never invent garments to fill three boards.
+- Scan jobs are persisted and resumed after restart. The current worker runs within the API process and processes one image batch at a time.
 
 ## Product
 
-- Capture or upload up to five JPEG, PNG, or WebP images per garment.
-- Analyze, chat, edit details and their sources, then confirm saving.
-- Persist private garment records and generate outfits using the selected saved record and the user's wardrobe.
+- Chat with persistent conversation history.
+- Explicit image consent before JPEG, PNG, or WebP uploads; up to ten photos per batch, each at most 10 MB.
+- Background photo detection, editable individual-item drafts, and explicit confirmation before wardrobe saves.
+- Manage availability, edit garments, remove private assets, and use saved outfit boards.
+- Confirm occasion and dress code; use opt-in Open-Meteo weather or manual temperature/rain.
+- Initial normalized outfit weights: occasion/dress 30%, compatibility 25%, weather 20%, style 15%, layering/variety 10%.
 - Detect repeated copies of the same primary photo and require a separate confirmation to save another copy.
 
 ## User preferences

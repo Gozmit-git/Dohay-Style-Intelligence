@@ -10,9 +10,14 @@ import {
   useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
+  QueryClient,
   QueryFunction,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -20,13 +25,32 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ConfirmMvpItemBody,
+  CreateMvpThreadBody,
+  CreateMvpUpload200,
+  CreateMvpUploadBody,
+  DeleteMvpItem200,
   GarmentAnalysis,
   GarmentAnalysisInput,
   GarmentChatInput,
   GarmentChatReply,
   HealthStatus,
+  MvpAttributes,
+  MvpItem,
+  MvpJob,
+  MvpMessage,
+  MvpOutfit,
+  MvpProfile,
+  MvpProfileInput,
+  MvpThread,
   OutfitRequest,
   OutfitResponse,
+  RecommendMvpOutfits200,
+  RecommendMvpOutfitsBody,
+  RecordMvpOutfitFeedbackBody,
+  SendMvpMessageBody,
+  StartMvpScanBody,
+  SwapMvpOutfitItemBody,
   UploadRequest,
   UploadTarget,
   WardrobeItem,
@@ -95,7 +119,7 @@ export const getHealthCheckQueryKey = () => {
     }
 
 
-export const getHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -110,25 +134,49 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type HealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthCheck>>>
 export type HealthCheckQueryError = ErrorType<unknown>
 
 
+export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof healthCheck>>,
+          TError,
+          Awaited<ReturnType<typeof healthCheck>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof healthCheck>>,
+          TError,
+          Awaited<ReturnType<typeof healthCheck>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Health check
  */
 
 export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getHealthCheckQueryOptions(options)
 
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
@@ -218,13 +266,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  */
 export const useRequestWardrobeUploadUrl = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestWardrobeUploadUrl>>, TError,RequestWardrobeUploadUrlMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
+ , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof requestWardrobeUploadUrl>>,
         TError,
         RequestWardrobeUploadUrlMutationVariables,
         TContext
       > => {
-      return useMutation(getRequestWardrobeUploadUrlMutationOptions(options));
+      return useMutation(getRequestWardrobeUploadUrlMutationOptions(options), queryClient);
     }
 
 export const getAnalyzeGarmentUrl = () => {
@@ -306,13 +354,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  */
 export const useAnalyzeGarment = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeGarment>>, TError,AnalyzeGarmentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
+ , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof analyzeGarment>>,
         TError,
         AnalyzeGarmentMutationVariables,
         TContext
       > => {
-      return useMutation(getAnalyzeGarmentMutationOptions(options));
+      return useMutation(getAnalyzeGarmentMutationOptions(options), queryClient);
     }
 
 export const getChatAboutGarmentUrl = () => {
@@ -394,13 +442,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  */
 export const useChatAboutGarment = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatAboutGarment>>, TError,ChatAboutGarmentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
+ , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof chatAboutGarment>>,
         TError,
         ChatAboutGarmentMutationVariables,
         TContext
       > => {
-      return useMutation(getChatAboutGarmentMutationOptions(options));
+      return useMutation(getChatAboutGarmentMutationOptions(options), queryClient);
     }
 
 export const getListWardrobeItemsUrl = () => {
@@ -436,7 +484,7 @@ export const getListWardrobeItemsQueryKey = () => {
     }
 
 
-export const getListWardrobeItemsQueryOptions = <TData = Awaited<ReturnType<typeof listWardrobeItems>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listWardrobeItems>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListWardrobeItemsQueryOptions = <TData = Awaited<ReturnType<typeof listWardrobeItems>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWardrobeItems>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -451,25 +499,49 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listWardrobeItems>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listWardrobeItems>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type ListWardrobeItemsQueryResult = NonNullable<Awaited<ReturnType<typeof listWardrobeItems>>>
 export type ListWardrobeItemsQueryError = ErrorType<unknown>
 
 
+export function useListWardrobeItems<TData = Awaited<ReturnType<typeof listWardrobeItems>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWardrobeItems>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listWardrobeItems>>,
+          TError,
+          Awaited<ReturnType<typeof listWardrobeItems>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListWardrobeItems<TData = Awaited<ReturnType<typeof listWardrobeItems>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWardrobeItems>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listWardrobeItems>>,
+          TError,
+          Awaited<ReturnType<typeof listWardrobeItems>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListWardrobeItems<TData = Awaited<ReturnType<typeof listWardrobeItems>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWardrobeItems>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List the signed-in user's saved garments
  */
 
 export function useListWardrobeItems<TData = Awaited<ReturnType<typeof listWardrobeItems>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listWardrobeItems>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listWardrobeItems>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListWardrobeItemsQueryOptions(options)
 
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
@@ -559,13 +631,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  */
 export const useSaveWardrobeItem = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveWardrobeItem>>, TError,SaveWardrobeItemMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
+ , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof saveWardrobeItem>>,
         TError,
         SaveWardrobeItemMutationVariables,
         TContext
       > => {
-      return useMutation(getSaveWardrobeItemMutationOptions(options));
+      return useMutation(getSaveWardrobeItemMutationOptions(options), queryClient);
     }
 
 export const getGetWardrobeSummaryUrl = () => {
@@ -601,7 +673,7 @@ export const getGetWardrobeSummaryQueryKey = () => {
     }
 
 
-export const getGetWardrobeSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getWardrobeSummary>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWardrobeSummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetWardrobeSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getWardrobeSummary>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWardrobeSummary>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -616,25 +688,49 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWardrobeSummary>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWardrobeSummary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetWardrobeSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getWardrobeSummary>>>
 export type GetWardrobeSummaryQueryError = ErrorType<unknown>
 
 
+export function useGetWardrobeSummary<TData = Awaited<ReturnType<typeof getWardrobeSummary>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWardrobeSummary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getWardrobeSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getWardrobeSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetWardrobeSummary<TData = Awaited<ReturnType<typeof getWardrobeSummary>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWardrobeSummary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getWardrobeSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getWardrobeSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetWardrobeSummary<TData = Awaited<ReturnType<typeof getWardrobeSummary>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWardrobeSummary>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get a compact wardrobe overview
  */
 
 export function useGetWardrobeSummary<TData = Awaited<ReturnType<typeof getWardrobeSummary>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWardrobeSummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWardrobeSummary>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetWardrobeSummaryQueryOptions(options)
 
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
@@ -724,12 +820,1542 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  */
 export const useRecommendOutfits = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recommendOutfits>>, TError,RecommendOutfitsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
+ , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof recommendOutfits>>,
         TError,
         RecommendOutfitsMutationVariables,
         TContext
       > => {
-      return useMutation(getRecommendOutfitsMutationOptions(options));
+      return useMutation(getRecommendOutfitsMutationOptions(options), queryClient);
+    }
+
+export const getGetMvpProfileUrl = () => {
+
+
+
+
+  return `/api/v1/profile`
+}
+
+export const getMvpProfile = async ( options?: Parameters<typeof customFetch>[1]): Promise<MvpProfile> => {
+
+  return customFetch<MvpProfile>(getGetMvpProfileUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMvpProfileQueryKey = () => {
+    return [
+    `/api/v1/profile`
+    ] as const;
+    }
+
+
+export const getGetMvpProfileQueryOptions = <TData = Awaited<ReturnType<typeof getMvpProfile>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMvpProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMvpProfileQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMvpProfile>>> = ({ signal }) => getMvpProfile({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMvpProfile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMvpProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getMvpProfile>>>
+export type GetMvpProfileQueryError = ErrorType<unknown>
+
+
+export function useGetMvpProfile<TData = Awaited<ReturnType<typeof getMvpProfile>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMvpProfile>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMvpProfile>>,
+          TError,
+          Awaited<ReturnType<typeof getMvpProfile>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMvpProfile<TData = Awaited<ReturnType<typeof getMvpProfile>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMvpProfile>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMvpProfile>>,
+          TError,
+          Awaited<ReturnType<typeof getMvpProfile>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMvpProfile<TData = Awaited<ReturnType<typeof getMvpProfile>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMvpProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetMvpProfile<TData = Awaited<ReturnType<typeof getMvpProfile>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMvpProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMvpProfileQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveMvpProfileUrl = () => {
+
+
+
+
+  return `/api/v1/profile`
+}
+
+export const saveMvpProfile = async (mvpProfileInput: MvpProfileInput, options?: Parameters<typeof customFetch>[1]): Promise<MvpProfile> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MvpProfile>(getSaveMvpProfileUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(mvpProfileInput)
+  }
+);}
+
+
+
+
+
+export const getSaveMvpProfileMutationKey = () => ['saveMvpProfile'] as const;
+
+export const getSaveMvpProfileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveMvpProfile>>, TError,SaveMvpProfileMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveMvpProfile>>, TError,SaveMvpProfileMutationVariables, TContext> => {
+
+const mutationKey = getSaveMvpProfileMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveMvpProfile>>, SaveMvpProfileMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveMvpProfile(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveMvpProfileMutationResult = NonNullable<Awaited<ReturnType<typeof saveMvpProfile>>>
+    export type SaveMvpProfileMutationBody = BodyType<MvpProfileInput>
+    export type SaveMvpProfileMutationError = ErrorType<unknown>
+    export type SaveMvpProfileMutationVariables = {data: BodyType<MvpProfileInput>}
+
+    export const useSaveMvpProfile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveMvpProfile>>, TError,SaveMvpProfileMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof saveMvpProfile>>,
+        TError,
+        SaveMvpProfileMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveMvpProfileMutationOptions(options), queryClient);
+    }
+
+export const getCreateMvpUploadUrl = () => {
+
+
+
+
+  return `/api/v1/uploads`
+}
+
+export const createMvpUpload = async (createMvpUploadBody: CreateMvpUploadBody, options?: Parameters<typeof customFetch>[1]): Promise<CreateMvpUpload200> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CreateMvpUpload200>(getCreateMvpUploadUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createMvpUploadBody)
+  }
+);}
+
+
+
+
+
+export const getCreateMvpUploadMutationKey = () => ['createMvpUpload'] as const;
+
+export const getCreateMvpUploadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMvpUpload>>, TError,CreateMvpUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMvpUpload>>, TError,CreateMvpUploadMutationVariables, TContext> => {
+
+const mutationKey = getCreateMvpUploadMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMvpUpload>>, CreateMvpUploadMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMvpUpload(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMvpUploadMutationResult = NonNullable<Awaited<ReturnType<typeof createMvpUpload>>>
+    export type CreateMvpUploadMutationBody = BodyType<CreateMvpUploadBody>
+    export type CreateMvpUploadMutationError = ErrorType<unknown>
+    export type CreateMvpUploadMutationVariables = {data: BodyType<CreateMvpUploadBody>}
+
+    export const useCreateMvpUpload = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMvpUpload>>, TError,CreateMvpUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createMvpUpload>>,
+        TError,
+        CreateMvpUploadMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateMvpUploadMutationOptions(options), queryClient);
+    }
+
+export const getStartMvpScanUrl = () => {
+
+
+
+
+  return `/api/v1/wardrobe/scan`
+}
+
+export const startMvpScan = async (startMvpScanBody: StartMvpScanBody, options?: Parameters<typeof customFetch>[1]): Promise<MvpJob> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MvpJob>(getStartMvpScanUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(startMvpScanBody)
+  }
+);}
+
+
+
+
+
+export const getStartMvpScanMutationKey = () => ['startMvpScan'] as const;
+
+export const getStartMvpScanMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startMvpScan>>, TError,StartMvpScanMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startMvpScan>>, TError,StartMvpScanMutationVariables, TContext> => {
+
+const mutationKey = getStartMvpScanMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startMvpScan>>, StartMvpScanMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  startMvpScan(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartMvpScanMutationResult = NonNullable<Awaited<ReturnType<typeof startMvpScan>>>
+    export type StartMvpScanMutationBody = BodyType<StartMvpScanBody>
+    export type StartMvpScanMutationError = ErrorType<unknown>
+    export type StartMvpScanMutationVariables = {data: BodyType<StartMvpScanBody>}
+
+    export const useStartMvpScan = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startMvpScan>>, TError,StartMvpScanMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof startMvpScan>>,
+        TError,
+        StartMvpScanMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStartMvpScanMutationOptions(options), queryClient);
+    }
+
+export const getGetMvpJobUrl = (jobId: string,) => {
+
+
+
+
+  return `/api/v1/jobs/${jobId}`
+}
+
+export const getMvpJob = async (jobId: string, options?: Parameters<typeof customFetch>[1]): Promise<MvpJob> => {
+
+  return customFetch<MvpJob>(getGetMvpJobUrl(jobId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMvpJobQueryKey = (jobId: string,) => {
+    return [
+    `/api/v1/jobs/${jobId}`
+    ] as const;
+    }
+
+
+export const getGetMvpJobQueryOptions = <TData = Awaited<ReturnType<typeof getMvpJob>>, TError = ErrorType<unknown>>(jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMvpJob>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMvpJobQueryKey(jobId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMvpJob>>> = ({ signal }) => getMvpJob(jobId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: jobId !== null && jobId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMvpJob>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMvpJobQueryResult = NonNullable<Awaited<ReturnType<typeof getMvpJob>>>
+export type GetMvpJobQueryError = ErrorType<unknown>
+
+
+export function useGetMvpJob<TData = Awaited<ReturnType<typeof getMvpJob>>, TError = ErrorType<unknown>>(
+ jobId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMvpJob>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMvpJob>>,
+          TError,
+          Awaited<ReturnType<typeof getMvpJob>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMvpJob<TData = Awaited<ReturnType<typeof getMvpJob>>, TError = ErrorType<unknown>>(
+ jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMvpJob>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMvpJob>>,
+          TError,
+          Awaited<ReturnType<typeof getMvpJob>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMvpJob<TData = Awaited<ReturnType<typeof getMvpJob>>, TError = ErrorType<unknown>>(
+ jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMvpJob>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetMvpJob<TData = Awaited<ReturnType<typeof getMvpJob>>, TError = ErrorType<unknown>>(
+ jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMvpJob>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMvpJobQueryOptions(jobId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListMvpWardrobeUrl = () => {
+
+
+
+
+  return `/api/v1/wardrobe`
+}
+
+export const listMvpWardrobe = async ( options?: Parameters<typeof customFetch>[1]): Promise<MvpItem[]> => {
+
+  return customFetch<MvpItem[]>(getListMvpWardrobeUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMvpWardrobeQueryKey = () => {
+    return [
+    `/api/v1/wardrobe`
+    ] as const;
+    }
+
+
+export const getListMvpWardrobeQueryOptions = <TData = Awaited<ReturnType<typeof listMvpWardrobe>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpWardrobe>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMvpWardrobeQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMvpWardrobe>>> = ({ signal }) => listMvpWardrobe({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMvpWardrobe>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMvpWardrobeQueryResult = NonNullable<Awaited<ReturnType<typeof listMvpWardrobe>>>
+export type ListMvpWardrobeQueryError = ErrorType<unknown>
+
+
+export function useListMvpWardrobe<TData = Awaited<ReturnType<typeof listMvpWardrobe>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpWardrobe>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMvpWardrobe>>,
+          TError,
+          Awaited<ReturnType<typeof listMvpWardrobe>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMvpWardrobe<TData = Awaited<ReturnType<typeof listMvpWardrobe>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpWardrobe>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMvpWardrobe>>,
+          TError,
+          Awaited<ReturnType<typeof listMvpWardrobe>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMvpWardrobe<TData = Awaited<ReturnType<typeof listMvpWardrobe>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpWardrobe>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListMvpWardrobe<TData = Awaited<ReturnType<typeof listMvpWardrobe>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpWardrobe>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMvpWardrobeQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getConfirmMvpItemUrl = () => {
+
+
+
+
+  return `/api/v1/wardrobe`
+}
+
+export const confirmMvpItem = async (confirmMvpItemBody: ConfirmMvpItemBody, options?: Parameters<typeof customFetch>[1]): Promise<MvpItem> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MvpItem>(getConfirmMvpItemUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(confirmMvpItemBody)
+  }
+);}
+
+
+
+
+
+export const getConfirmMvpItemMutationKey = () => ['confirmMvpItem'] as const;
+
+export const getConfirmMvpItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmMvpItem>>, TError,ConfirmMvpItemMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmMvpItem>>, TError,ConfirmMvpItemMutationVariables, TContext> => {
+
+const mutationKey = getConfirmMvpItemMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmMvpItem>>, ConfirmMvpItemMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  confirmMvpItem(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmMvpItemMutationResult = NonNullable<Awaited<ReturnType<typeof confirmMvpItem>>>
+    export type ConfirmMvpItemMutationBody = BodyType<ConfirmMvpItemBody>
+    export type ConfirmMvpItemMutationError = ErrorType<unknown>
+    export type ConfirmMvpItemMutationVariables = {data: BodyType<ConfirmMvpItemBody>}
+
+    export const useConfirmMvpItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmMvpItem>>, TError,ConfirmMvpItemMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmMvpItem>>,
+        TError,
+        ConfirmMvpItemMutationVariables,
+        TContext
+      > => {
+      return useMutation(getConfirmMvpItemMutationOptions(options), queryClient);
+    }
+
+export const getUpdateMvpItemUrl = (itemId: string,) => {
+
+
+
+
+  return `/api/v1/wardrobe/${itemId}`
+}
+
+export const updateMvpItem = async (itemId: string,
+    mvpAttributes: MvpAttributes, options?: Parameters<typeof customFetch>[1]): Promise<MvpItem> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MvpItem>(getUpdateMvpItemUrl(itemId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(mvpAttributes)
+  }
+);}
+
+
+
+
+
+export const getUpdateMvpItemMutationKey = () => ['updateMvpItem'] as const;
+
+export const getUpdateMvpItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMvpItem>>, TError,UpdateMvpItemMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMvpItem>>, TError,UpdateMvpItemMutationVariables, TContext> => {
+
+const mutationKey = getUpdateMvpItemMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMvpItem>>, UpdateMvpItemMutationVariables> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateMvpItem(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMvpItemMutationResult = NonNullable<Awaited<ReturnType<typeof updateMvpItem>>>
+    export type UpdateMvpItemMutationBody = BodyType<MvpAttributes>
+    export type UpdateMvpItemMutationError = ErrorType<unknown>
+    export type UpdateMvpItemMutationVariables = {itemId: string;data: BodyType<MvpAttributes>}
+
+    export const useUpdateMvpItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMvpItem>>, TError,UpdateMvpItemMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMvpItem>>,
+        TError,
+        UpdateMvpItemMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateMvpItemMutationOptions(options), queryClient);
+    }
+
+export const getDeleteMvpItemUrl = (itemId: string,) => {
+
+
+
+
+  return `/api/v1/wardrobe/${itemId}`
+}
+
+export const deleteMvpItem = async (itemId: string, options?: Parameters<typeof customFetch>[1]): Promise<DeleteMvpItem200> => {
+
+  return customFetch<DeleteMvpItem200>(getDeleteMvpItemUrl(itemId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteMvpItemMutationKey = () => ['deleteMvpItem'] as const;
+
+export const getDeleteMvpItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMvpItem>>, TError,DeleteMvpItemMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMvpItem>>, TError,DeleteMvpItemMutationVariables, TContext> => {
+
+const mutationKey = getDeleteMvpItemMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMvpItem>>, DeleteMvpItemMutationVariables> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteMvpItem(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMvpItemMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMvpItem>>>
+
+    export type DeleteMvpItemMutationError = ErrorType<unknown>
+    export type DeleteMvpItemMutationVariables = {itemId: string}
+
+    export const useDeleteMvpItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMvpItem>>, TError,DeleteMvpItemMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMvpItem>>,
+        TError,
+        DeleteMvpItemMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteMvpItemMutationOptions(options), queryClient);
+    }
+
+export const getListMvpThreadsUrl = () => {
+
+
+
+
+  return `/api/v1/threads`
+}
+
+export const listMvpThreads = async ( options?: Parameters<typeof customFetch>[1]): Promise<MvpThread[]> => {
+
+  return customFetch<MvpThread[]>(getListMvpThreadsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMvpThreadsQueryKey = () => {
+    return [
+    `/api/v1/threads`
+    ] as const;
+    }
+
+
+export const getListMvpThreadsQueryOptions = <TData = Awaited<ReturnType<typeof listMvpThreads>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpThreads>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMvpThreadsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMvpThreads>>> = ({ signal }) => listMvpThreads({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMvpThreads>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMvpThreadsQueryResult = NonNullable<Awaited<ReturnType<typeof listMvpThreads>>>
+export type ListMvpThreadsQueryError = ErrorType<unknown>
+
+
+export function useListMvpThreads<TData = Awaited<ReturnType<typeof listMvpThreads>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpThreads>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMvpThreads>>,
+          TError,
+          Awaited<ReturnType<typeof listMvpThreads>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMvpThreads<TData = Awaited<ReturnType<typeof listMvpThreads>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpThreads>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMvpThreads>>,
+          TError,
+          Awaited<ReturnType<typeof listMvpThreads>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMvpThreads<TData = Awaited<ReturnType<typeof listMvpThreads>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpThreads>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListMvpThreads<TData = Awaited<ReturnType<typeof listMvpThreads>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpThreads>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMvpThreadsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateMvpThreadUrl = () => {
+
+
+
+
+  return `/api/v1/threads`
+}
+
+export const createMvpThread = async (createMvpThreadBody: CreateMvpThreadBody, options?: Parameters<typeof customFetch>[1]): Promise<MvpThread> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MvpThread>(getCreateMvpThreadUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createMvpThreadBody)
+  }
+);}
+
+
+
+
+
+export const getCreateMvpThreadMutationKey = () => ['createMvpThread'] as const;
+
+export const getCreateMvpThreadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMvpThread>>, TError,CreateMvpThreadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMvpThread>>, TError,CreateMvpThreadMutationVariables, TContext> => {
+
+const mutationKey = getCreateMvpThreadMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMvpThread>>, CreateMvpThreadMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMvpThread(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMvpThreadMutationResult = NonNullable<Awaited<ReturnType<typeof createMvpThread>>>
+    export type CreateMvpThreadMutationBody = BodyType<CreateMvpThreadBody>
+    export type CreateMvpThreadMutationError = ErrorType<unknown>
+    export type CreateMvpThreadMutationVariables = {data: BodyType<CreateMvpThreadBody>}
+
+    export const useCreateMvpThread = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMvpThread>>, TError,CreateMvpThreadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createMvpThread>>,
+        TError,
+        CreateMvpThreadMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateMvpThreadMutationOptions(options), queryClient);
+    }
+
+export const getListMvpMessagesUrl = (threadId: string,) => {
+
+
+
+
+  return `/api/v1/threads/${threadId}/messages`
+}
+
+export const listMvpMessages = async (threadId: string, options?: Parameters<typeof customFetch>[1]): Promise<MvpMessage[]> => {
+
+  return customFetch<MvpMessage[]>(getListMvpMessagesUrl(threadId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMvpMessagesQueryKey = (threadId: string,) => {
+    return [
+    `/api/v1/threads/${threadId}/messages`
+    ] as const;
+    }
+
+
+export const getListMvpMessagesQueryOptions = <TData = Awaited<ReturnType<typeof listMvpMessages>>, TError = ErrorType<unknown>>(threadId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpMessages>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMvpMessagesQueryKey(threadId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMvpMessages>>> = ({ signal }) => listMvpMessages(threadId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: threadId !== null && threadId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMvpMessages>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMvpMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof listMvpMessages>>>
+export type ListMvpMessagesQueryError = ErrorType<unknown>
+
+
+export function useListMvpMessages<TData = Awaited<ReturnType<typeof listMvpMessages>>, TError = ErrorType<unknown>>(
+ threadId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpMessages>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMvpMessages>>,
+          TError,
+          Awaited<ReturnType<typeof listMvpMessages>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMvpMessages<TData = Awaited<ReturnType<typeof listMvpMessages>>, TError = ErrorType<unknown>>(
+ threadId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpMessages>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMvpMessages>>,
+          TError,
+          Awaited<ReturnType<typeof listMvpMessages>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMvpMessages<TData = Awaited<ReturnType<typeof listMvpMessages>>, TError = ErrorType<unknown>>(
+ threadId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpMessages>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListMvpMessages<TData = Awaited<ReturnType<typeof listMvpMessages>>, TError = ErrorType<unknown>>(
+ threadId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpMessages>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMvpMessagesQueryOptions(threadId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSendMvpMessageUrl = (threadId: string,) => {
+
+
+
+
+  return `/api/v1/threads/${threadId}/messages`
+}
+
+export const sendMvpMessage = async (threadId: string,
+    sendMvpMessageBody: SendMvpMessageBody, options?: Parameters<typeof customFetch>[1]): Promise<MvpMessage> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MvpMessage>(getSendMvpMessageUrl(threadId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(sendMvpMessageBody)
+  }
+);}
+
+
+
+
+
+export const getSendMvpMessageMutationKey = () => ['sendMvpMessage'] as const;
+
+export const getSendMvpMessageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendMvpMessage>>, TError,SendMvpMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendMvpMessage>>, TError,SendMvpMessageMutationVariables, TContext> => {
+
+const mutationKey = getSendMvpMessageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendMvpMessage>>, SendMvpMessageMutationVariables> = (props) => {
+          const {threadId,data} = props ?? {};
+
+          return  sendMvpMessage(threadId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendMvpMessageMutationResult = NonNullable<Awaited<ReturnType<typeof sendMvpMessage>>>
+    export type SendMvpMessageMutationBody = BodyType<SendMvpMessageBody>
+    export type SendMvpMessageMutationError = ErrorType<unknown>
+    export type SendMvpMessageMutationVariables = {threadId: string;data: BodyType<SendMvpMessageBody>}
+
+    export const useSendMvpMessage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendMvpMessage>>, TError,SendMvpMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sendMvpMessage>>,
+        TError,
+        SendMvpMessageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSendMvpMessageMutationOptions(options), queryClient);
+    }
+
+export const getListMvpOutfitsUrl = () => {
+
+
+
+
+  return `/api/v1/outfits`
+}
+
+export const listMvpOutfits = async ( options?: Parameters<typeof customFetch>[1]): Promise<MvpOutfit[]> => {
+
+  return customFetch<MvpOutfit[]>(getListMvpOutfitsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMvpOutfitsQueryKey = () => {
+    return [
+    `/api/v1/outfits`
+    ] as const;
+    }
+
+
+export const getListMvpOutfitsQueryOptions = <TData = Awaited<ReturnType<typeof listMvpOutfits>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpOutfits>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMvpOutfitsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMvpOutfits>>> = ({ signal }) => listMvpOutfits({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMvpOutfits>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMvpOutfitsQueryResult = NonNullable<Awaited<ReturnType<typeof listMvpOutfits>>>
+export type ListMvpOutfitsQueryError = ErrorType<unknown>
+
+
+export function useListMvpOutfits<TData = Awaited<ReturnType<typeof listMvpOutfits>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpOutfits>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMvpOutfits>>,
+          TError,
+          Awaited<ReturnType<typeof listMvpOutfits>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMvpOutfits<TData = Awaited<ReturnType<typeof listMvpOutfits>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpOutfits>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMvpOutfits>>,
+          TError,
+          Awaited<ReturnType<typeof listMvpOutfits>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMvpOutfits<TData = Awaited<ReturnType<typeof listMvpOutfits>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpOutfits>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListMvpOutfits<TData = Awaited<ReturnType<typeof listMvpOutfits>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpOutfits>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMvpOutfitsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRecommendMvpOutfitsUrl = () => {
+
+
+
+
+  return `/api/v1/outfits/recommend`
+}
+
+export const recommendMvpOutfits = async (recommendMvpOutfitsBody: RecommendMvpOutfitsBody, options?: Parameters<typeof customFetch>[1]): Promise<RecommendMvpOutfits200> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<RecommendMvpOutfits200>(getRecommendMvpOutfitsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(recommendMvpOutfitsBody)
+  }
+);}
+
+
+
+
+
+export const getRecommendMvpOutfitsMutationKey = () => ['recommendMvpOutfits'] as const;
+
+export const getRecommendMvpOutfitsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recommendMvpOutfits>>, TError,RecommendMvpOutfitsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recommendMvpOutfits>>, TError,RecommendMvpOutfitsMutationVariables, TContext> => {
+
+const mutationKey = getRecommendMvpOutfitsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recommendMvpOutfits>>, RecommendMvpOutfitsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  recommendMvpOutfits(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecommendMvpOutfitsMutationResult = NonNullable<Awaited<ReturnType<typeof recommendMvpOutfits>>>
+    export type RecommendMvpOutfitsMutationBody = BodyType<RecommendMvpOutfitsBody>
+    export type RecommendMvpOutfitsMutationError = ErrorType<unknown>
+    export type RecommendMvpOutfitsMutationVariables = {data: BodyType<RecommendMvpOutfitsBody>}
+
+    export const useRecommendMvpOutfits = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recommendMvpOutfits>>, TError,RecommendMvpOutfitsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recommendMvpOutfits>>,
+        TError,
+        RecommendMvpOutfitsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecommendMvpOutfitsMutationOptions(options), queryClient);
+    }
+
+export const getSaveMvpOutfitUrl = (outfitId: string,) => {
+
+
+
+
+  return `/api/v1/outfits/${outfitId}/save`
+}
+
+export const saveMvpOutfit = async (outfitId: string, options?: Parameters<typeof customFetch>[1]): Promise<MvpOutfit> => {
+
+  return customFetch<MvpOutfit>(getSaveMvpOutfitUrl(outfitId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getSaveMvpOutfitMutationKey = () => ['saveMvpOutfit'] as const;
+
+export const getSaveMvpOutfitMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveMvpOutfit>>, TError,SaveMvpOutfitMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveMvpOutfit>>, TError,SaveMvpOutfitMutationVariables, TContext> => {
+
+const mutationKey = getSaveMvpOutfitMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveMvpOutfit>>, SaveMvpOutfitMutationVariables> = (props) => {
+          const {outfitId} = props ?? {};
+
+          return  saveMvpOutfit(outfitId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveMvpOutfitMutationResult = NonNullable<Awaited<ReturnType<typeof saveMvpOutfit>>>
+
+    export type SaveMvpOutfitMutationError = ErrorType<unknown>
+    export type SaveMvpOutfitMutationVariables = {outfitId: string}
+
+    export const useSaveMvpOutfit = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveMvpOutfit>>, TError,SaveMvpOutfitMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof saveMvpOutfit>>,
+        TError,
+        SaveMvpOutfitMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveMvpOutfitMutationOptions(options), queryClient);
+    }
+
+export const getSwapMvpOutfitItemUrl = (outfitId: string,) => {
+
+
+
+
+  return `/api/v1/outfits/${outfitId}/swap`
+}
+
+export const swapMvpOutfitItem = async (outfitId: string,
+    swapMvpOutfitItemBody: SwapMvpOutfitItemBody, options?: Parameters<typeof customFetch>[1]): Promise<MvpOutfit> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MvpOutfit>(getSwapMvpOutfitItemUrl(outfitId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(swapMvpOutfitItemBody)
+  }
+);}
+
+
+
+
+
+export const getSwapMvpOutfitItemMutationKey = () => ['swapMvpOutfitItem'] as const;
+
+export const getSwapMvpOutfitItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof swapMvpOutfitItem>>, TError,SwapMvpOutfitItemMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof swapMvpOutfitItem>>, TError,SwapMvpOutfitItemMutationVariables, TContext> => {
+
+const mutationKey = getSwapMvpOutfitItemMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof swapMvpOutfitItem>>, SwapMvpOutfitItemMutationVariables> = (props) => {
+          const {outfitId,data} = props ?? {};
+
+          return  swapMvpOutfitItem(outfitId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SwapMvpOutfitItemMutationResult = NonNullable<Awaited<ReturnType<typeof swapMvpOutfitItem>>>
+    export type SwapMvpOutfitItemMutationBody = BodyType<SwapMvpOutfitItemBody>
+    export type SwapMvpOutfitItemMutationError = ErrorType<unknown>
+    export type SwapMvpOutfitItemMutationVariables = {outfitId: string;data: BodyType<SwapMvpOutfitItemBody>}
+
+    export const useSwapMvpOutfitItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof swapMvpOutfitItem>>, TError,SwapMvpOutfitItemMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof swapMvpOutfitItem>>,
+        TError,
+        SwapMvpOutfitItemMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSwapMvpOutfitItemMutationOptions(options), queryClient);
+    }
+
+export const getRecordMvpOutfitFeedbackUrl = (outfitId: string,) => {
+
+
+
+
+  return `/api/v1/outfits/${outfitId}/feedback`
+}
+
+export const recordMvpOutfitFeedback = async (outfitId: string,
+    recordMvpOutfitFeedbackBody: RecordMvpOutfitFeedbackBody, options?: Parameters<typeof customFetch>[1]): Promise<MvpOutfit> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MvpOutfit>(getRecordMvpOutfitFeedbackUrl(outfitId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(recordMvpOutfitFeedbackBody)
+  }
+);}
+
+
+
+
+
+export const getRecordMvpOutfitFeedbackMutationKey = () => ['recordMvpOutfitFeedback'] as const;
+
+export const getRecordMvpOutfitFeedbackMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordMvpOutfitFeedback>>, TError,RecordMvpOutfitFeedbackMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordMvpOutfitFeedback>>, TError,RecordMvpOutfitFeedbackMutationVariables, TContext> => {
+
+const mutationKey = getRecordMvpOutfitFeedbackMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordMvpOutfitFeedback>>, RecordMvpOutfitFeedbackMutationVariables> = (props) => {
+          const {outfitId,data} = props ?? {};
+
+          return  recordMvpOutfitFeedback(outfitId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordMvpOutfitFeedbackMutationResult = NonNullable<Awaited<ReturnType<typeof recordMvpOutfitFeedback>>>
+    export type RecordMvpOutfitFeedbackMutationBody = BodyType<RecordMvpOutfitFeedbackBody>
+    export type RecordMvpOutfitFeedbackMutationError = ErrorType<unknown>
+    export type RecordMvpOutfitFeedbackMutationVariables = {outfitId: string;data: BodyType<RecordMvpOutfitFeedbackBody>}
+
+    export const useRecordMvpOutfitFeedback = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordMvpOutfitFeedback>>, TError,RecordMvpOutfitFeedbackMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recordMvpOutfitFeedback>>,
+        TError,
+        RecordMvpOutfitFeedbackMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecordMvpOutfitFeedbackMutationOptions(options), queryClient);
     }
 

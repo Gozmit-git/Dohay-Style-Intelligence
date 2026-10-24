@@ -1,0 +1,411 @@
+openapi: 3.0.3
+info: { title: DOHAY Chat MVP, version: 1.0.0 }
+paths:
+  /v1/profile:
+    get:
+      operationId: getMvpProfile
+      responses:
+        "200":
+          description: User profile or default profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpProfile" }
+    post:
+      operationId: saveMvpProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MvpProfileInput" }
+      responses:
+        "200":
+          description: Saved profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpProfile" }
+  /v1/uploads:
+    post:
+      operationId: createMvpUpload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 1, maxLength: 180 }
+                size: { type: integer, minimum: 1, maximum: 10485760 }
+                contentType: { type: string, enum: [image/jpeg, image/png, image/webp] }
+              required: [name, size, contentType]
+      responses:
+        "200":
+          description: Private upload target; consent required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uploadURL: { type: string }
+                  objectPath: { type: string }
+                required: [uploadURL, objectPath]
+  /v1/wardrobe/scan:
+    post:
+      operationId: startMvpScan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                objectPaths: { type: array, minItems: 1, maxItems: 10, items: { type: string } }
+                threadId: { type: string, nullable: true }
+              required: [objectPaths]
+      responses:
+        "202":
+          description: Queued image analysis
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpJob" }
+  /v1/jobs/{jobId}:
+    parameters:
+      - { name: jobId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getMvpJob
+      responses:
+        "200":
+          description: Processing status and editable, unconfirmed detections
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpJob" }
+  /v1/wardrobe:
+    get:
+      operationId: listMvpWardrobe
+      responses:
+        "200":
+          description: Confirmed user-owned wardrobe
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/MvpItem" } }
+    post:
+      operationId: confirmMvpItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                jobId: { type: string }
+                draftId: { type: string }
+                attributes: { $ref: "#/components/schemas/MvpAttributes" }
+                allowDuplicate: { type: boolean, default: false }
+              required: [jobId, draftId, attributes]
+      responses:
+        "201":
+          description: Explicitly confirmed garment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpItem" }
+  /v1/wardrobe/{itemId}:
+    parameters:
+      - { name: itemId, in: path, required: true, schema: { type: string } }
+    patch:
+      operationId: updateMvpItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MvpAttributes" }
+      responses:
+        "200":
+          description: Updated garment attributes and availability
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpItem" }
+    delete:
+      operationId: deleteMvpItem
+      responses:
+        "200":
+          description: Garment and unshared image assets removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { deleted: { type: boolean } }
+                required: [deleted]
+  /v1/threads:
+    get:
+      operationId: listMvpThreads
+      responses:
+        "200":
+          description: Recent conversations
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/MvpThread" } }
+    post:
+      operationId: createMvpThread
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { title: { type: string, maxLength: 120 } }
+      responses:
+        "201":
+          description: New conversation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpThread" }
+  /v1/threads/{threadId}/messages:
+    parameters:
+      - { name: threadId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listMvpMessages
+      responses:
+        "200":
+          description: Persistent chat history
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/MvpMessage" } }
+    post:
+      operationId: sendMvpMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content: { type: string, maxLength: 4000 }
+                objectPaths: { type: array, maxItems: 10, items: { type: string } }
+              required: [content]
+      responses:
+        "200":
+          description: Assistant reply; attached photos start an asynchronous scan job
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpMessage" }
+  /v1/outfits:
+    get:
+      operationId: listMvpOutfits
+      responses:
+        "200":
+          description: Saved outfits with actual wardrobe item IDs
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/MvpOutfit" } }
+  /v1/outfits/recommend:
+    post:
+      operationId: recommendMvpOutfits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context: { $ref: "#/components/schemas/MvpContext" }
+                threadId: { type: string, nullable: true }
+              required: [context]
+      responses:
+        "200":
+          description: Up to three eligible, ranked outfits; fewer if constraints cannot be met
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  outfits: { type: array, items: { $ref: "#/components/schemas/MvpOutfit" } }
+                  context: { $ref: "#/components/schemas/MvpContext" }
+                  warnings: { type: array, items: { type: string } }
+                required: [outfits, context, warnings]
+  /v1/outfits/{outfitId}/save:
+    parameters:
+      - { name: outfitId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: saveMvpOutfit
+      responses:
+        "200":
+          description: Saved outfit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpOutfit" }
+  /v1/outfits/{outfitId}/swap:
+    parameters:
+      - { name: outfitId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: swapMvpOutfitItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                itemId: { type: string }
+                replacementItemId: { type: string }
+              required: [itemId, replacementItemId]
+      responses:
+        "200":
+          description: Revalidated and rescored outfit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpOutfit" }
+  /v1/outfits/{outfitId}/feedback:
+    parameters:
+      - { name: outfitId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: recordMvpOutfitFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action: { type: string, enum: [like, dislike, worn] }
+              required: [action]
+      responses:
+        "200":
+          description: Recorded preference or wear event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpOutfit" }
+components:
+  schemas:
+    MvpProfileInput:
+      type: object
+      properties:
+        stylePreferences: { type: array, items: { type: string }, maxItems: 20 }
+        preferredPalette: { type: array, items: { type: string }, maxItems: 20 }
+        comfortRestrictions: { type: array, items: { type: string }, maxItems: 20 }
+        defaultDressCode: { type: string, nullable: true }
+        imageConsent: { type: boolean }
+        selfiePath: { type: string, nullable: true }
+      required: [stylePreferences, preferredPalette, comfortRestrictions, defaultDressCode, imageConsent, selfiePath]
+    MvpProfile:
+      allOf:
+        - { $ref: "#/components/schemas/MvpProfileInput" }
+        - type: object
+          properties: { id: { type: string } }
+          required: [id]
+    MvpSource:
+      type: object
+      properties:
+        attribute: { type: string }
+        value: { type: string }
+        source: { type: string, enum: [visually_observed, AI_estimate, user_provided, label_verified, externally_verified] }
+      required: [attribute, value, source]
+    MvpAttributes:
+      type: object
+      properties:
+        category: { type: string, enum: [top, bottom, one_piece, outerwear, footwear, accessory] }
+        subcategory: { type: string, maxLength: 180 }
+        colors: { type: array, minItems: 1, maxItems: 10, items: { type: string } }
+        pattern: { type: string, nullable: true }
+        formality: { type: string, enum: [casual, smart_casual, business, formal] }
+        layerRole: { type: string, enum: [base, bottom, one_piece, outer, footwear, accessory] }
+        occasionTags: { type: array, items: { type: string } }
+        seasonTags: { type: array, items: { type: string } }
+        styleTags: { type: array, items: { type: string } }
+        fabricEstimate: { type: string, nullable: true }
+        fabricComposition: { type: string, nullable: true, description: "Exact composition only when supplied by the user or a readable label." }
+        brand: { type: string, nullable: true }
+        size: { type: string, nullable: true }
+        notes: { type: string, nullable: true, maxLength: 2000 }
+        isAvailable: { type: boolean }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        attributeSources: { type: array, items: { $ref: "#/components/schemas/MvpSource" } }
+      required: [category, subcategory, colors, pattern, formality, layerRole, occasionTags, seasonTags, styleTags, fabricEstimate, brand, size, notes, isAvailable, confidence, attributeSources]
+    MvpDraft:
+      type: object
+      properties:
+        id: { type: string }
+        imagePaths: { type: array, items: { type: string } }
+        attributes: { $ref: "#/components/schemas/MvpAttributes" }
+        confirmedItemId: { type: string, nullable: true }
+      required: [id, imagePaths, attributes, confirmedItemId]
+    MvpItem:
+      type: object
+      properties:
+        id: { type: string }
+        imagePaths: { type: array, items: { type: string } }
+        attributes: { $ref: "#/components/schemas/MvpAttributes" }
+        createdAt: { type: string }
+      required: [id, imagePaths, attributes, createdAt]
+    MvpJob:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [pending, running, completed, failed] }
+        drafts: { type: array, items: { $ref: "#/components/schemas/MvpDraft" } }
+        warnings: { type: array, items: { type: string } }
+        error: { type: string, nullable: true }
+        threadId: { type: string, nullable: true }
+        createdAt: { type: string }
+      required: [id, status, drafts, warnings, error, threadId, createdAt]
+    MvpThread:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        updatedAt: { type: string }
+      required: [id, title, updatedAt]
+    MvpContext:
+      type: object
+      properties:
+        occasion: { type: string, minLength: 1, maxLength: 180 }
+        dressCode: { type: string, enum: [casual, smart_casual, business, formal] }
+        exclusions: { type: array, items: { type: string } }
+        includeItemId: { type: string, nullable: true, description: "An optional owned garment that must appear in every outfit." }
+        activities: { type: string, maxLength: 500 }
+        outdoor: { type: boolean }
+        temperature: { type: number, nullable: true, minimum: -70, maximum: 65 }
+        precipitation: { type: number, nullable: true, minimum: 0, maximum: 500 }
+        weatherLabel: { type: string, nullable: true }
+        latitude: { type: number, nullable: true, minimum: -90, maximum: 90 }
+        longitude: { type: number, nullable: true, minimum: -180, maximum: 180 }
+        useWeather: { type: boolean }
+      required: [occasion, dressCode]
+    MvpMessage:
+      type: object
+      properties:
+        id: { type: string }
+        threadId: { type: string }
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string }
+        attachments: { type: array, items: { type: string } }
+        jobId: { type: string, nullable: true }
+        outfitIds: { type: array, items: { type: string } }
+        intent: { type: string, enum: [chat, recommend, add_wardrobe] }
+        suggestedContext:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/MvpContext"
+        createdAt: { type: string }
+      required: [id, threadId, role, content, attachments, jobId, outfitIds, intent, suggestedContext, createdAt]
+    MvpScoreBreakdown:
+      type: object
+      properties:
+        occasionFit: { type: number, minimum: 0, maximum: 1 }
+        compatibility: { type: number, minimum: 0, maximum: 1 }
+        weather: { type: number, minimum: 0, maximum: 1 }
+        style: { type: number, minimum: 0, maximum: 1 }
+        layeringVariety: { type: number, minimum: 0, maximum: 1 }
+      required: [occasionFit, compatibility, weather, style, layeringVariety]
+    MvpOutfit:
+      type: object
+      properties:
+        id: { type: string }
+        itemIds: { type: array, items: { type: string } }
+        context: { $ref: "#/components/schemas/MvpContext" }
+        score: { type: number, minimum: 0, maximum: 1 }
+        breakdown: { $ref: "#/components/schemas/MvpScoreBreakdown" }
+        explanation: { type: string }
+        saved: { type: boolean }
+        feedback: { type: string, nullable: true }
+        createdAt: { type: string }
+      required: [id, itemIds, context, score, breakdown, explanation, saved, feedback, createdAt]

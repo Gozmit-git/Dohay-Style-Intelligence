@@ -23,6 +23,7 @@ import {
   replyAboutGarment,
 } from "../lib/wardrobeAi";
 import { requireAuth } from "../middlewares/requireAuth";
+import { consentFor } from "../lib/mvpData";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -71,6 +72,7 @@ async function getOwnedUpload(userId: string, objectPath: string) {
 }
 
 async function getOwnedPhoto(userId: string, objectPath: string) {
+  await consentFor(userId);
   const upload = await getOwnedUpload(userId, objectPath);
   if (!upload) {
     throw new Error("A photo is missing or does not belong to this account.");
@@ -84,8 +86,8 @@ async function getOwnedPhoto(userId: string, objectPath: string) {
   const file = await objectStorageService.getObjectEntityFile(objectPath);
   const [metadata] = await file.getMetadata();
   const [bytes] = await file.download();
-  if (!bytes.length || bytes.length > 15 * 1024 * 1024) {
-    throw new Error("The photo is empty or larger than 15 MB.");
+  if (!bytes.length || bytes.length > 10 * 1024 * 1024) {
+    throw new Error("The photo is empty or larger than 10 MB.");
   }
   if (metadata.contentType && metadata.contentType !== upload.contentType) {
     throw new Error("The uploaded photo type does not match its file details.");

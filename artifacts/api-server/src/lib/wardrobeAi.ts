@@ -8,7 +8,7 @@ const aiServiceUrl = (
   process.env.DOHAY_AI_INTERNAL_URL ?? "http://127.0.0.1:8765"
 ).replace(/\/+$/, "");
 
-async function postToAiService<T>(
+export async function postToAiService<T>(
   path: string,
   body: Record<string, unknown>,
 ): Promise<T> {
@@ -16,10 +16,12 @@ async function postToAiService<T>(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(120_000),
+    signal: AbortSignal.timeout(180_000),
   });
   if (!response.ok) {
-    throw new Error(`DOHAY AI service returned HTTP ${response.status}.`);
+    const body = await response.json().catch(() => null) as { detail?: unknown } | null;
+    throw new Error(typeof body?.detail === "string"
+      ? body.detail : `DOHAY could not complete the request (HTTP ${response.status}). Please retry.`);
   }
   return (await response.json()) as T;
 }

@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import app from "./app";
 import { logger } from "./lib/logger";
+import { resumeScanJobs } from "./lib/mvpJobs";
 
 const AI_SERVICE_URL = (
   process.env.DOHAY_AI_INTERNAL_URL ?? "http://127.0.0.1:8765"
@@ -78,6 +79,7 @@ async function start(): Promise<void> {
 
   try {
     await waitForAiService(aiProcess);
+    await resumeScanJobs();
   } catch (err) {
     aiProcess?.kill("SIGTERM");
     throw err;

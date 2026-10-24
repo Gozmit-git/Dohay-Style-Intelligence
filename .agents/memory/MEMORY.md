@@ -1,1 +1,2 @@
 - [Workspace dependency linking](workspace-dependency-linking.md) — newly copied workspace packages may need a full install even after a filtered dependency add.
+- [API contract generation](api-contracts.md) — test nullable referenced objects at runtime; disambiguate generated validators without removing automatic type exports.
