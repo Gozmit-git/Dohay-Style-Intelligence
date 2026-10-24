@@ -1,0 +1,8 @@
+.wardrobe-capture { padding: 22px; border: 1px solid hsl(var(--border)); border-radius: 18px; background: hsl(var(--card)); margin: 0 0 24px; }
+.wardrobe-capture-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.wardrobe-capture > p { font-size: 13px; line-height: 1.6; }
+.styling-simulation { margin: 12px 0 0; }
+.styling-simulation img { max-height: 660px; max-width: 100%; border-radius: 14px; object-fit: contain; }
+.styling-simulation figcaption { font-size: 12px; line-height: 1.6; padding: 10px 0; }
+.styling-review-notes { margin: 12px 0; font-size: 13px; }
+.styling-review-notes summary { cursor: pointer; }

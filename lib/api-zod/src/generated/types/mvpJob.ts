@@ -6,9 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { MvpDraft } from './mvpDraft';
+import type { MvpJobKind } from './mvpJobKind';
 import type { MvpJobStatus } from './mvpJobStatus';
 
 export interface MvpJob {
+  kind?: MvpJobKind;
+  /** @nullable */
+  imagePath?: string | null;
+  /** @nullable */
+  sourceMessageId?: string | null;
+  objectPaths?: string[];
   id: string;
   status: MvpJobStatus;
   drafts: MvpDraft[];

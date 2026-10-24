@@ -15,20 +15,19 @@ import {
 import { AttributeEditor } from "../components/attribute-editor";
 import { GarmentPhoto } from "../components/garment-photo";
 import { displayName, setUserAttribute } from "../lib/mvp-utils";
+import { WardrobeCapture } from "../components/wardrobe-capture";
 
 export function WardrobePage() {
   const query = useListMvpWardrobe({ query: { queryKey: getListMvpWardrobeQueryKey() } });
   const items = query.data ?? [];
   const availableCount = items.filter((item) => item.attributes.isAvailable).length;
-  const [savedItemChatId, setSavedItemChatId] = useState<string | null>(null);
-  const activeSavedItem = items.find((item) => item.id === savedItemChatId) ?? null;
 
   return (
     <div className="page-content">
       <header className="page-topline">
-        <div><span className="eyebrow">The clothes you really own</span><h1 className="page-title">Your wardrobe.</h1><p className="page-subtitle">Every piece here was confirmed by you. Edit the details, mark what is ready to wear, or remove something you no longer have.</p></div>
-        <Link className="button" href="/"><span>Talk about your closet</span></Link>
+        <div><span className="eyebrow">The clothes you really own</span><h1 className="page-title">Your wardrobe.</h1><p className="page-subtitle">Upload or take a photo. Each visible garment and accessory saves separately, with AI-estimated details you can override anytime.</p></div>
       </header>
+      <WardrobeCapture />
       <div className="wardrobe-toolbar">
         <div className="wardrobe-stats">
           <span className="stat-pill"><Layers3 size={13} /> {items.length} {items.length === 1 ? "piece" : "pieces"} saved</span>
@@ -40,16 +39,14 @@ export function WardrobePage() {
       {query.isError && <div className="error-state"><div className="empty-mark"><AlertCircle size={19} /></div><h2>Your wardrobe is safe.</h2><p>We could not load it just now. Please try again.</p><button className="button" type="button" onClick={() => query.refetch()}>Load wardrobe</button></div>}
       {!query.isLoading && !query.isError && items.length === 0 && <div className="empty-state">
         <div className="empty-mark"><Shirt size={21} /></div><h2>A little space for what you own.</h2>
-        <p>There are no saved pieces yet. Start a chat, add a clothing photo, then review and confirm each suggestion before it joins your wardrobe.</p>
-        <Link className="button" href="/">Add your first piece</Link>
+        <p>Upload photos or take a photo above. Items save automatically—no attribute review is required.</p>
       </div>}
-      {activeSavedItem && <SavedItemAssistant key={activeSavedItem.id} item={activeSavedItem} onClose={() => setSavedItemChatId(null)} />}
-      {!query.isLoading && !query.isError && items.length > 0 && <div className="wardrobe-grid">{items.map((item) => <WardrobeItemCard key={item.id} item={item} onAsk={() => setSavedItemChatId(item.id)} />)}</div>}
+      {!query.isLoading && !query.isError && items.length > 0 && <div className="wardrobe-grid">{items.map((item) => <WardrobeItemCard key={item.id} item={item} />)}</div>}
     </div>
   );
 }
 
-function WardrobeItemCard({ item, onAsk }: { item: MvpItem; onAsk: () => void }) {
+function WardrobeItemCard({ item }: { item: MvpItem }) {
   const queryClient = useQueryClient();
   const update = useUpdateMvpItem();
   const remove = useDeleteMvpItem();
@@ -80,7 +77,7 @@ function WardrobeItemCard({ item, onAsk }: { item: MvpItem; onAsk: () => void })
   );
   const sourceSummary = item.attributes.attributeSources?.some((source) => source.source === "user_provided")
     ? "Some details provided by you"
-    : item.attributes.confidence < 0.65 ? "A few details may need your review" : "Suggested from your photo";
+    : item.attributes.confidence < 0.65 ? "Low-confidence estimates; edit if needed" : "AI estimates from your photo";
 
   return (
     <article className="garment-card">
@@ -99,7 +96,6 @@ function WardrobeItemCard({ item, onAsk }: { item: MvpItem; onAsk: () => void })
         </div>
         {notice && <p className="card-notice">{notice}</p>}
         {!editing && !confirmDelete && <div className="card-toolbar">
-          <button className="button button-small" type="button" onClick={onAsk}><MessageCircle size={12} /> Ask DOHAY</button>
           <button className="button button-small button-quiet" type="button" onClick={() => { setNotice(""); setEditing(true); }}><Edit3 size={12} /> Edit details</button>
           <button className="button button-small button-danger" type="button" onClick={() => { setNotice(""); setConfirmDelete(true); }}><Trash2 size={12} /> Remove</button>
         </div>}

@@ -429,6 +429,10 @@ export const startMvpScanResponseDraftsItemAttributesConfidenceMax = 1;
 
 
 export const StartMvpScanResponse = zod.object({
+  "kind": zod.enum(['scan', 'styling_image']).optional(),
+  "imagePath": zod.string().nullish(),
+  "sourceMessageId": zod.string().nullish(),
+  "objectPaths": zod.array(zod.string()).optional(),
   "id": zod.string(),
   "status": zod.enum(['pending', 'running', 'completed', 'failed']),
   "drafts": zod.array(zod.object({
@@ -482,6 +486,10 @@ export const getMvpJobResponseDraftsItemAttributesConfidenceMax = 1;
 
 
 export const GetMvpJobResponse = zod.object({
+  "kind": zod.enum(['scan', 'styling_image']).optional(),
+  "imagePath": zod.string().nullish(),
+  "sourceMessageId": zod.string().nullish(),
+  "objectPaths": zod.array(zod.string()).optional(),
   "id": zod.string(),
   "status": zod.enum(['pending', 'running', 'completed', 'failed']),
   "drafts": zod.array(zod.object({
@@ -517,6 +525,60 @@ export const GetMvpJobResponse = zod.object({
   "threadId": zod.string().nullable(),
   "createdAt": zod.string()
 })
+
+
+export const listMvpJobsResponseDraftsItemAttributesSubcategoryMax = 180;
+
+export const listMvpJobsResponseDraftsItemAttributesColorsMax = 10;
+
+export const listMvpJobsResponseDraftsItemAttributesNotesMax = 2000;
+
+export const listMvpJobsResponseDraftsItemAttributesConfidenceMin = 0;
+export const listMvpJobsResponseDraftsItemAttributesConfidenceMax = 1;
+
+
+
+export const ListMvpJobsResponseItem = zod.object({
+  "kind": zod.enum(['scan', 'styling_image']).optional(),
+  "imagePath": zod.string().nullish(),
+  "sourceMessageId": zod.string().nullish(),
+  "objectPaths": zod.array(zod.string()).optional(),
+  "id": zod.string(),
+  "status": zod.enum(['pending', 'running', 'completed', 'failed']),
+  "drafts": zod.array(zod.object({
+  "id": zod.string(),
+  "imagePaths": zod.array(zod.string()),
+  "attributes": zod.object({
+  "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
+  "subcategory": zod.string().max(listMvpJobsResponseDraftsItemAttributesSubcategoryMax),
+  "colors": zod.array(zod.string()).min(1).max(listMvpJobsResponseDraftsItemAttributesColorsMax),
+  "pattern": zod.string().nullable(),
+  "formality": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "layerRole": zod.enum(['base', 'bottom', 'one_piece', 'outer', 'footwear', 'accessory']),
+  "occasionTags": zod.array(zod.string()),
+  "seasonTags": zod.array(zod.string()),
+  "styleTags": zod.array(zod.string()),
+  "fabricEstimate": zod.string().nullable(),
+  "fabricComposition": zod.string().nullish().describe('Exact composition only when supplied by the user or a readable label.'),
+  "brand": zod.string().nullable(),
+  "size": zod.string().nullable(),
+  "notes": zod.string().max(listMvpJobsResponseDraftsItemAttributesNotesMax).nullable(),
+  "isAvailable": zod.boolean(),
+  "confidence": zod.number().min(listMvpJobsResponseDraftsItemAttributesConfidenceMin).max(listMvpJobsResponseDraftsItemAttributesConfidenceMax),
+  "attributeSources": zod.array(zod.object({
+  "attribute": zod.string(),
+  "value": zod.string(),
+  "source": zod.enum(['visually_observed', 'AI_estimate', 'user_provided', 'label_verified', 'externally_verified'])
+}))
+}),
+  "confirmedItemId": zod.string().nullable()
+})),
+  "warnings": zod.array(zod.string()),
+  "error": zod.string().nullable(),
+  "threadId": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+export const ListMvpJobsResponse = zod.array(ListMvpJobsResponseItem)
 
 
 export const listMvpWardrobeResponseAttributesSubcategoryMax = 180;
@@ -777,6 +839,7 @@ export const listMvpMessagesResponseSuggestedContextOneLongitudeMax = 180;
 
 
 export const ListMvpMessagesResponseItem = zod.object({
+  "canVisualize": zod.boolean().optional(),
   "id": zod.string(),
   "threadId": zod.string(),
   "role": zod.enum(['user', 'assistant']),
@@ -875,6 +938,7 @@ export const sendMvpMessageResponseSuggestedContextOneLongitudeMax = 180;
 
 
 export const SendMvpMessageResponse = zod.object({
+  "canVisualize": zod.boolean().optional(),
   "id": zod.string(),
   "threadId": zod.string(),
   "role": zod.enum(['user', 'assistant']),
@@ -897,6 +961,67 @@ export const SendMvpMessageResponse = zod.object({
   "longitude": zod.number().min(sendMvpMessageResponseSuggestedContextOneLongitudeMin).max(sendMvpMessageResponseSuggestedContextOneLongitudeMax).nullish(),
   "useWeather": zod.boolean().optional()
 }).nullable(),
+  "createdAt": zod.string()
+})
+
+
+export const CreateMvpStylingImageParams = zod.object({
+  "threadId": zod.coerce.string()
+})
+
+export const CreateMvpStylingImageBody = zod.object({
+  "messageId": zod.string().uuid()
+})
+
+export const createMvpStylingImageResponseDraftsItemAttributesSubcategoryMax = 180;
+
+export const createMvpStylingImageResponseDraftsItemAttributesColorsMax = 10;
+
+export const createMvpStylingImageResponseDraftsItemAttributesNotesMax = 2000;
+
+export const createMvpStylingImageResponseDraftsItemAttributesConfidenceMin = 0;
+export const createMvpStylingImageResponseDraftsItemAttributesConfidenceMax = 1;
+
+
+
+export const CreateMvpStylingImageResponse = zod.object({
+  "kind": zod.enum(['scan', 'styling_image']).optional(),
+  "imagePath": zod.string().nullish(),
+  "sourceMessageId": zod.string().nullish(),
+  "objectPaths": zod.array(zod.string()).optional(),
+  "id": zod.string(),
+  "status": zod.enum(['pending', 'running', 'completed', 'failed']),
+  "drafts": zod.array(zod.object({
+  "id": zod.string(),
+  "imagePaths": zod.array(zod.string()),
+  "attributes": zod.object({
+  "category": zod.enum(['top', 'bottom', 'one_piece', 'outerwear', 'footwear', 'accessory']),
+  "subcategory": zod.string().max(createMvpStylingImageResponseDraftsItemAttributesSubcategoryMax),
+  "colors": zod.array(zod.string()).min(1).max(createMvpStylingImageResponseDraftsItemAttributesColorsMax),
+  "pattern": zod.string().nullable(),
+  "formality": zod.enum(['casual', 'smart_casual', 'business', 'formal']),
+  "layerRole": zod.enum(['base', 'bottom', 'one_piece', 'outer', 'footwear', 'accessory']),
+  "occasionTags": zod.array(zod.string()),
+  "seasonTags": zod.array(zod.string()),
+  "styleTags": zod.array(zod.string()),
+  "fabricEstimate": zod.string().nullable(),
+  "fabricComposition": zod.string().nullish().describe('Exact composition only when supplied by the user or a readable label.'),
+  "brand": zod.string().nullable(),
+  "size": zod.string().nullable(),
+  "notes": zod.string().max(createMvpStylingImageResponseDraftsItemAttributesNotesMax).nullable(),
+  "isAvailable": zod.boolean(),
+  "confidence": zod.number().min(createMvpStylingImageResponseDraftsItemAttributesConfidenceMin).max(createMvpStylingImageResponseDraftsItemAttributesConfidenceMax),
+  "attributeSources": zod.array(zod.object({
+  "attribute": zod.string(),
+  "value": zod.string(),
+  "source": zod.enum(['visually_observed', 'AI_estimate', 'user_provided', 'label_verified', 'externally_verified'])
+}))
+}),
+  "confirmedItemId": zod.string().nullable()
+})),
+  "warnings": zod.array(zod.string()),
+  "error": zod.string().nullable(),
+  "threadId": zod.string().nullable(),
   "createdAt": zod.string()
 })
 

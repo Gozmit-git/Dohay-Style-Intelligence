@@ -318,6 +318,18 @@ export interface MvpItem {
   createdAt: string;
 }
 
+export interface MvpStylingImageInput {
+  messageId: string;
+}
+
+export type MvpJobKind = typeof MvpJobKind[keyof typeof MvpJobKind];
+
+
+export const MvpJobKind = {
+  scan: 'scan',
+  styling_image: 'styling_image',
+} as const;
+
 export type MvpJobStatus = typeof MvpJobStatus[keyof typeof MvpJobStatus];
 
 
@@ -329,6 +341,12 @@ export const MvpJobStatus = {
 } as const;
 
 export interface MvpJob {
+  kind?: MvpJobKind;
+  /** @nullable */
+  imagePath?: string | null;
+  /** @nullable */
+  sourceMessageId?: string | null;
+  objectPaths?: string[];
   id: string;
   status: MvpJobStatus;
   drafts: MvpDraft[];
@@ -473,6 +491,7 @@ export const MvpMessageIntent = {
 } as const;
 
 export interface MvpMessage {
+  canVisualize?: boolean;
   id: string;
   threadId: string;
   role: MvpMessageRole;

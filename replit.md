@@ -36,24 +36,25 @@ A private, chatbot-first personal styling app. DOHAY chat is the main interface;
 
 - Keep FastAPI for AI processing because the supplied product brief explicitly requests it. Reuse the existing Express gateway for Clerk, database ownership checks, and storage rather than replacing the project's backend.
 - FastAPI binds only to loopback. Public clients call the gateway, which authenticates users and loads only their private images and records.
-- Photos may upload privately for analysis before approval; a final wardrobe record is created only by the explicit save action.
+- Wardrobe capture is exclusively Upload photos or Take photo in Wardrobe. The user explicitly replaced manual first-review approval with automatic saving of detected items; retain AI-estimate provenance and allow optional editing afterward.
 - Treat visual guesses as estimates. Exact composition, brand, price, GSM, and quality must not be asserted from appearance alone.
 - Keep DOHAY branding and the existing app. Chat remains the primary interface because the user explicitly chose a full chatbot-first MVP, not a separate FitCheck product.
-- Outfit boards use confirmed, available, owned garments only. Apply occasion, dress-code, exclusion, and layering constraints before ranking; never invent garments to fill three boards.
+- Outfit boards use saved, available, owned garments only. Autosaved estimates are not user-verified facts. Apply occasion, dress-code, exclusion, and layering constraints before ranking; never invent garments to fill three boards.
 - Scan jobs are persisted and resumed after restart. The current worker runs within the API process and processes one image batch at a time.
 
 ## Product
 
 - Chat with persistent conversation history.
-- A core action is taking an outfit selfie for a quick fit-check review of how the outfit looks. Review styling and visible garment fit, not the person's body. Fit-check photos stay in private chat and never auto-create wardrobe records; wardrobe capture is a separate explicit mode.
+- Styling chat has no Add to wardrobe action. Outfit selfies automatically queue a private AI-edited styling simulation; show it as the primary result, with text review notes optional. The user explicitly requested this visual simulation despite its exclusion from the original MVP brief. Label it AI-generated, never a guarantee of fit, identity fidelity, or ownership. Preserve the original and never infer body measurements or change body shape.
+- Automatic image edits require an assessable outfit in the first image. For unclear/non-outfit inputs, ask for a clearer photo instead of starting a paid image edit. Queue image generation as a persisted background job rather than holding the chat request open.
 - Voice currently uses browser dictation and speech synthesis, as explicitly chosen by the user without connecting ElevenLabs. Label it browser-powered, make microphone activation and auto-read opt-in, and keep text chat available when unsupported.
 - Explicit image consent before JPEG, PNG, or WebP uploads; up to ten photos per batch, each at most 10 MB.
-- Background photo detection, editable individual-item drafts, and explicit confirmation before wardrobe saves.
+- Background photo detection automatically saves individual garments/accessories with separate masked cutout images, not the full selfie. Preserve only visible garment pixels; do not reconstruct hidden fabric. Contour edges and attributes are estimates. Existing records remain unless explicitly edited/deleted; re-uploading a matching old source can upgrade its item image without overwriting manual attribute corrections.
 - Manage availability, edit garments, remove private assets, and use saved outfit boards.
 - Chat exposes saved style, palette, comfort restrictions, and default workplace dress code, plus per-request occasion, dress code, activities, exclusions, and weather. These remain optional for quick chat and selfie reviews, as agreed with the user; only wardrobe outfit boards require confirmed occasion and dress code.
 - Apply request details explicitly before using them in chat. Saved preferences persist across conversations; request details reset for a new conversation. Use opt-in Open-Meteo weather or manual temperature/rain, and never retain precise coordinates in chat history.
 - Initial normalized outfit weights: occasion/dress 30%, compatibility 25%, weather 20%, style 15%, layering/variety 10%.
-- Detect repeated copies of the same primary photo and require a separate confirmation to save another copy.
+- Detect repeated copies of the same primary photo during autosave; do not duplicate saved items or overwrite manual attribute corrections. Separate occurrences of the same garment/accessory type within one image remain distinct.
 
 ## User preferences
 

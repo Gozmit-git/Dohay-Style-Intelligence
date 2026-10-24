@@ -29,6 +29,7 @@ import { useBrowserVoice } from "../lib/use-browser-voice";
 import { VoiceControls } from "../components/voice-controls";
 import { ChatPreferences } from "../components/chat-preferences";
 import "../components/chat-preferences.css";
+import { StylingImageAction } from "../components/styling-image-action";
 
 type PickedPhoto = { id: string; file: File; preview: string };
 type ContextDraft = {
@@ -61,7 +62,7 @@ const initialContext: ContextDraft = {
 
 const starterPrompts = [
   "I have dinner plans tonight. What should I wear?",
-  "Help me add a few pieces to my wardrobe.",
+  "Show me a fresh way to style my outfit.",
   "Show me new ways to wear something I own.",
 ];
 
@@ -136,7 +137,7 @@ export function ChatPage() {
   useEffect(() => { voice.stopAll(); }, [activeThreadId, voice.stopAll]);
   useEffect(() => { voice.stopAll(); voice.setAutoSpeak(false); }, [user?.id, voice.stopAll, voice.setAutoSpeak]);
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
-  const [photoPurpose, setPhotoPurpose] = useState<"fit_check" | "wardrobe">("fit_check");
+  const photoPurpose = "fit_check";
   const photosRef = useRef(photos);
   photosRef.current = photos;
   const [sendError, setSendError] = useState("");
@@ -255,7 +256,7 @@ export function ChatPage() {
   const addFiles = (fileList: FileList | null) => {
     if (!fileList) return;
     const selected = Array.from(fileList);
-    const limit = photoPurpose === "fit_check" ? 3 : 10;
+    const limit = 3;
     const remaining = limit - photos.length;
     if (selected.length > remaining) {
       setSendError(`You can attach up to ${limit} photos in this mode.`);
@@ -323,7 +324,7 @@ export function ChatPage() {
     const content = (overrideText ?? text).trim();
     if (!content && photos.length === 0) return;
     if (photoPurpose === "fit_check" && photos.length > 3) {
-      setSendError("Keep up to three photos for a quick fit check, or switch to Add to wardrobe.");
+      setSendError("Keep up to three photos for a quick fit check. Capture clothing for your closet in Wardrobe.");
       return;
     }
     if (photos.length && !hasImageConsent) {
@@ -340,7 +341,7 @@ export function ChatPage() {
       let threadId = activeThreadId;
       if (!threadId) threadId = await createConversation(content);
       const objectPaths = photos.length ? await uploadPhotos() : undefined;
-      const finalContent = content || (photoPurpose === "fit_check" ? "How does my outfit look? Give me a quick fit check." : "Please identify these garments for my wardrobe.");
+      const finalContent = content || "How does my outfit look? Show the suggested styling changes in an image.";
       const stylingContext: MvpStylingContext | undefined = contextApplied ? {
         occasion: context.occasion.trim() || undefined, dressCode: context.dressCode || undefined,
         activities: context.activities.trim() || undefined,
@@ -477,7 +478,6 @@ export function ChatPage() {
         </div>
         <div className="chat-top-actions">
           <button className="button button-small" type="button" disabled={isBusy} onClick={() => {
-            setPhotoPurpose("fit_check");
             setText("How does my outfit look? Give me a quick fit check.");
             if (hasImageConsent) selfiePicker.current?.click();
             else setConsentError("Enable photo uploads below, then take or choose your outfit selfie.");
@@ -500,13 +500,15 @@ export function ChatPage() {
             <div className="conversation-welcome">
               <div className="welcome-kicker"><Sparkles size={13} /> Good style starts with what you own</div>
               <h2 className="welcome-title">Your outfit. <em>A fresh opinion.</em></h2>
-              <p className="welcome-text">Take or upload an outfit selfie and ask, “How do I look?” Get a quick review of what works and a few styling tweaks. No wardrobe setup needed.</p>
+              <p className="welcome-text">Take or upload an outfit selfie to see suggested styling changes in an AI-edited image. Your original stays unchanged, with review notes available if useful. Capture wardrobe items separately in Wardrobe.</p>
               <div className="suggestion-row">
                 {starterPrompts.map((prompt) => <button className="suggestion-chip" type="button" key={prompt} onClick={() => { setText(prompt); if (prompt.toLowerCase().includes("dinner")) { setContext({ ...initialContext, occasion: "Dinner" }); setShowContext(true); } }}>{prompt}</button>)}
               </div>
             </div>
           )}
-          {messages.map((message) => {
+          {messages.map((message, index) => {
+            const canVisualize = message.role === "assistant" && message.canVisualize !== false && !message.jobId &&
+              messages.slice(0, index).some((previous) => previous.role === "user" && previous.canVisualize !== false && previous.intent === "chat" && getMessagePaths(previous).length > 0);
             const messageOutfits = (message.outfitIds ?? []).map((id) => outfitsById.get(id)).filter((outfit): outfit is MvpOutfit => !!outfit);
             const paths = getMessagePaths(message);
             return (
@@ -522,18 +524,21 @@ export function ChatPage() {
                         {voice.speakingId === message.id ? "Stop" : "Listen"}
                       </button>}
                     </div>
-                    {message.content}
+                    {message.role === "assistant" && message.jobId
+                      ? <details className="styling-review-notes"><summary>Review notes</summary><div>{message.content}</div></details>
+                      : message.content}
                     {paths.length > 0 && <div className="message-images">{paths.map((path, index) => <img key={`${path}-${index}`} src={imageUrl(path)} alt={`Attached wardrobe photo ${index + 1}`} loading="lazy" />)}</div>}
                   </div>
                 </article>
                 {message.jobId && <ScanJobCard jobId={message.jobId} threadId={message.threadId} objectPaths={paths} />}
+                {canVisualize && <StylingImageAction threadId={message.threadId} messageId={message.id} />}
                 {message.role === "assistant" && messageOutfits.length > 0 && <div className="board-grid">{messageOutfits.map((outfit) => <OutfitBoard key={outfit.id} outfit={outfit} items={wardrobeQuery.data ?? []} />)}</div>}
               </div>
             );
           })}
           {messages.length > 0 && !assistantHasOutfits && !recommendation && (
             <div className="suggestion-row conversation-followup">
-              {["I have a plan tonight", "Help me decide what to wear", "I want to add something I own"].map((prompt) =>
+              {["I have a plan tonight", "Help me decide what to wear"].map((prompt) =>
                 <button className="suggestion-chip" key={prompt} type="button" onClick={() => setText(prompt)}>{prompt}</button>
               )}
             </div>
@@ -545,7 +550,7 @@ export function ChatPage() {
               {recommendation.warnings.length > 0 && <div className="scan-warnings">{recommendation.warnings.join(" ")}</div>}
               {recommendation.outfits.length > 0
                 ? <div className="board-grid">{recommendationsToShow.map((outfit) => <OutfitBoard key={outfit.id} outfit={outfit} items={wardrobeQuery.data ?? []} />)}</div>
-                : <div className="empty-state"><h2>Not quite enough in the closet yet</h2><p>Add a few more confirmed pieces, then we can put together options from what is really yours.</p><Link className="button button-small" href="/wardrobe">Visit your wardrobe</Link></div>}
+                : <div className="empty-state"><h2>Not quite enough in the closet yet</h2><p>Add a few more saved pieces, then we can put together options from what is really yours.</p><Link className="button button-small" href="/wardrobe">Visit your wardrobe</Link></div>}
             </section>
           )}
           {recommendError && <div className="chat-error">{recommendError}<button type="button" className="text-retry" onClick={getOutfits}>Try again</button></div>}
@@ -596,24 +601,23 @@ export function ChatPage() {
         <div className="composer">
           <VoiceControls voice={voice} draft={text} disabled={isBusy} />
           <div className="suggestion-row" aria-label="Photo purpose" style={{ padding: "12px 14px 0" }}>
-            <button type="button" className={`button button-small ${photoPurpose === "fit_check" ? "" : "button-quiet"}`} aria-pressed={photoPurpose === "fit_check"} disabled={isBusy} onClick={() => setPhotoPurpose("fit_check")}>Quick fit check</button>
-            <button type="button" className={`button button-small ${photoPurpose === "wardrobe" ? "" : "button-quiet"}`} aria-pressed={photoPurpose === "wardrobe"} disabled={isBusy} onClick={() => setPhotoPurpose("wardrobe")}>Add to wardrobe</button>
+            <strong>Styling changes in Image</strong>
           </div>
-          <p className="private-note">{photoPurpose === "fit_check" ? "Show your whole outfit if possible. Your face is optional. The review stays in this private chat; it won’t add wardrobe items." : "Identify individual pieces, then review and confirm before saving."}</p>
+          <p className="private-note">Share an outfit selfie for an AI styling simulation. Your original stays unchanged; the image is not a fit guarantee and never adds wardrobe items.</p>
           {photos.length > 0 && <div className="attachment-tray">{photos.map((photo) => <div className="attachment-thumb" key={photo.id}><img src={photo.preview} alt={photo.file.name} /><button type="button" className="attachment-remove" aria-label={`Remove ${photo.file.name}`} onClick={() => removePhoto(photo.id)}><X size={12} /></button></div>)}</div>}
           <textarea value={text} maxLength={4000} onChange={(event) => { if (voice.listening) voice.stopListening(); setText(event.target.value); }} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void handleSend(); } }} placeholder="Type or dictate what you’re deciding…" aria-label="Message DOHAY" />
           <div className="composer-toolbar">
             <div className="composer-tools">
-              {photoPurpose === "fit_check" && <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => selfiePicker.current?.click()}><Camera size={15} /><span>Take outfit selfie</span></button>}
-              <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= (photoPurpose === "fit_check" ? 3 : 10) || isBusy} onClick={() => picker.current?.click()} title={!hasImageConsent ? "Give photo consent first" : "Choose photos"}><Plus size={15} /><span>Choose photos</span></button>
+              <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => selfiePicker.current?.click()}><Camera size={15} /><span>Take outfit selfie</span></button>
+              <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => picker.current?.click()} title={!hasImageConsent ? "Give photo consent first" : "Choose photos"}><Plus size={15} /><span>Choose photos</span></button>
               <input ref={selfiePicker} type="file" hidden accept="image/jpeg,image/png,image/webp" capture="user" onChange={(event) => { addFiles(event.target.files); event.target.value = ""; }} />
               <input ref={picker} type="file" hidden accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => { addFiles(event.target.files); event.target.value = ""; }} />
-              <span className="file-hint">{hasImageConsent ? `JPEG, PNG or WebP · 10 MB each · up to ${photoPurpose === "fit_check" ? 3 : 10}` : "Text chat works without photo access"}</span>
+              <span className="file-hint">{hasImageConsent ? "JPEG, PNG or WebP · 10 MB each · up to 3" : "Text chat works without photo access"}</span>
             </div>
             <button type="button" className="composer-send" disabled={isBusy || (!text.trim() && photos.length === 0)} aria-label="Send message" onClick={() => void handleSend()}>{isBusy ? <LoaderCircle size={16} className="spin" /> : <ArrowUp size={17} />}</button>
           </div>
         </div>
-        <p className="private-note"><ShieldCheck size={12} /> Your wardrobe photos stay private. Confirmed items are saved only when you choose to add them.</p>
+        <p className="private-note"><ShieldCheck size={12} /> Your photos stay private. Styling images never add items to your wardrobe.</p>
       </div>
     </section>
   );

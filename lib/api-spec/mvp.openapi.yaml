@@ -189,6 +189,34 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/MvpMessage" }
+  /v1/jobs:
+    get:
+      operationId: listMvpJobs
+      responses:
+        "200":
+          description: Recent wardrobe capture jobs belonging to the authenticated user
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/MvpJob" } }
+  /v1/threads/{threadId}/styling-image:
+    post:
+      operationId: createMvpStylingImage
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MvpStylingImageInput" }
+      responses:
+        "202":
+          description: Persistent, private AI styling simulation job
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MvpJob" }
   /v1/outfits:
     get:
       operationId: listMvpOutfits
@@ -337,9 +365,18 @@ components:
         attributes: { $ref: "#/components/schemas/MvpAttributes" }
         createdAt: { type: string }
       required: [id, imagePaths, attributes, createdAt]
+    MvpStylingImageInput:
+      type: object
+      properties:
+        messageId: { type: string, format: uuid }
+      required: [messageId]
     MvpJob:
       type: object
       properties:
+        kind: { type: string, enum: [scan, styling_image] }
+        imagePath: { type: ["string", "null"] }
+        sourceMessageId: { type: ["string", "null"] }
+        objectPaths: { type: array, items: { type: string } }
         id: { type: string }
         status: { type: string, enum: [pending, running, completed, failed] }
         drafts: { type: array, items: { $ref: "#/components/schemas/MvpDraft" } }
@@ -389,6 +426,7 @@ components:
     MvpMessage:
       type: object
       properties:
+        canVisualize: { type: boolean }
         id: { type: string }
         threadId: { type: string }
         role: { type: string, enum: [user, assistant] }

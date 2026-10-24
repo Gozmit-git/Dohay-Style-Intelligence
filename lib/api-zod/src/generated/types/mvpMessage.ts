@@ -10,6 +10,7 @@ import type { MvpMessageIntent } from './mvpMessageIntent';
 import type { MvpMessageRole } from './mvpMessageRole';
 
 export interface MvpMessage {
+  canVisualize?: boolean;
   id: string;
   threadId: string;
   role: MvpMessageRole;

@@ -42,6 +42,7 @@ import type {
   MvpOutfit,
   MvpProfile,
   MvpProfileInput,
+  MvpStylingImageInput,
   MvpThread,
   OutfitRequest,
   OutfitResponse,
@@ -1265,6 +1266,101 @@ export function useGetMvpJob<TData = Awaited<ReturnType<typeof getMvpJob>>, TErr
 
 
 
+export const getListMvpJobsUrl = () => {
+
+
+
+
+  return `/api/v1/jobs`
+}
+
+export const listMvpJobs = async ( options?: Parameters<typeof customFetch>[1]): Promise<MvpJob[]> => {
+
+  return customFetch<MvpJob[]>(getListMvpJobsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMvpJobsQueryKey = () => {
+    return [
+    `/api/v1/jobs`
+    ] as const;
+    }
+
+
+export const getListMvpJobsQueryOptions = <TData = Awaited<ReturnType<typeof listMvpJobs>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpJobs>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMvpJobsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMvpJobs>>> = ({ signal }) => listMvpJobs({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMvpJobs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMvpJobsQueryResult = NonNullable<Awaited<ReturnType<typeof listMvpJobs>>>
+export type ListMvpJobsQueryError = ErrorType<unknown>
+
+
+export function useListMvpJobs<TData = Awaited<ReturnType<typeof listMvpJobs>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpJobs>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMvpJobs>>,
+          TError,
+          Awaited<ReturnType<typeof listMvpJobs>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMvpJobs<TData = Awaited<ReturnType<typeof listMvpJobs>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpJobs>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMvpJobs>>,
+          TError,
+          Awaited<ReturnType<typeof listMvpJobs>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMvpJobs<TData = Awaited<ReturnType<typeof listMvpJobs>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpJobs>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListMvpJobs<TData = Awaited<ReturnType<typeof listMvpJobs>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMvpJobs>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMvpJobsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getListMvpWardrobeUrl = () => {
 
 
@@ -1946,6 +2042,89 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getSendMvpMessageMutationOptions(options), queryClient);
+    }
+
+export const getCreateMvpStylingImageUrl = (threadId: string,) => {
+
+
+
+
+  return `/api/v1/threads/${threadId}/styling-image`
+}
+
+export const createMvpStylingImage = async (threadId: string,
+    mvpStylingImageInput: MvpStylingImageInput, options?: Parameters<typeof customFetch>[1]): Promise<MvpJob> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MvpJob>(getCreateMvpStylingImageUrl(threadId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(mvpStylingImageInput)
+  }
+);}
+
+
+
+
+
+export const getCreateMvpStylingImageMutationKey = () => ['createMvpStylingImage'] as const;
+
+export const getCreateMvpStylingImageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMvpStylingImage>>, TError,CreateMvpStylingImageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMvpStylingImage>>, TError,CreateMvpStylingImageMutationVariables, TContext> => {
+
+const mutationKey = getCreateMvpStylingImageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMvpStylingImage>>, CreateMvpStylingImageMutationVariables> = (props) => {
+          const {threadId,data} = props ?? {};
+
+          return  createMvpStylingImage(threadId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMvpStylingImageMutationResult = NonNullable<Awaited<ReturnType<typeof createMvpStylingImage>>>
+    export type CreateMvpStylingImageMutationBody = BodyType<MvpStylingImageInput>
+    export type CreateMvpStylingImageMutationError = ErrorType<unknown>
+    export type CreateMvpStylingImageMutationVariables = {threadId: string;data: BodyType<MvpStylingImageInput>}
+
+    export const useCreateMvpStylingImage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMvpStylingImage>>, TError,CreateMvpStylingImageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createMvpStylingImage>>,
+        TError,
+        CreateMvpStylingImageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateMvpStylingImageMutationOptions(options), queryClient);
     }
 
 export const getListMvpOutfitsUrl = () => {

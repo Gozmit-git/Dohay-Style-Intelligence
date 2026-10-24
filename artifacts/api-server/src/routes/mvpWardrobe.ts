@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createHash } from "node:crypto";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   db, mvpJobs, mvpMessages, mvpOutfits, mvpOutfitItems, wardrobeItems, wardrobeUploads,
 } from "@workspace/db";
@@ -13,6 +13,12 @@ import {
 import { createScanJob } from "../lib/mvpJobs";
 
 const router = Router();
+router.get("/jobs", handler(async (_req, res, userId) => {
+  const rows = await db.select().from(mvpJobs).where(and(
+    eq(mvpJobs.userId, userId), sql`coalesce(${mvpJobs.result}->>'kind', 'scan') = 'scan'`,
+  )).orderBy(desc(mvpJobs.createdAt)).limit(10);
+  res.json(api.ListMvpJobsResponse.parse(rows.map(jobApi)));
+}));
 const roles = { top: "base", bottom: "bottom", one_piece: "one_piece", outerwear: "outer", footwear: "footwear", accessory: "accessory" };
 function approvedAttributes(value: MvpAttributes, original: MvpAttributes): MvpAttributes {
   if (roles[value.category] !== value.layerRole) throw new MvpError(400, "The category and layering role must match.");
@@ -57,6 +63,8 @@ router.post("/wardrobe", handler(async (req, res, userId) => {
       if (existing) return itemApi(existing);
       throw new MvpError(409, "This suggestion has already been confirmed and removed. Start a new scan to add it again.");
     }
+    if (draft.imagePaths.some((path) => job.objectPaths.includes(path)))
+      throw new MvpError(400, "Upload this photo in Wardrobe again to automatically save separate garment images.");
     const attributes = approvedAttributes(data.attributes, draft.attributes);
     const images = await imageDataFor(userId, draft.imagePaths);
     const rawHash = createHash("sha256").update(Buffer.from(images[0].dataBase64, "base64")).digest("hex");
@@ -84,19 +92,26 @@ router.patch("/wardrobe/:itemId", handler(async (req, res, userId) => {
   const original = itemApi(row);
   const attributes = approvedAttributes(input(api.UpdateMvpItemBody, req.body), original.attributes);
   const [updated] = await db.update(wardrobeItems).set({
-    record: legacyRecord(attributes, original.imagePaths),
+    record: { ...row.record, ...legacyRecord(attributes, original.imagePaths) },
   }).where(and(eq(wardrobeItems.id, id), eq(wardrobeItems.userId, userId))).returning();
   res.json(api.UpdateMvpItemResponse.parse(itemApi(updated)));
 }));
 router.delete("/wardrobe/:itemId", handler(async (req, res, userId) => {
   const id = param(req, "itemId");
-  const all = await itemsFor(userId);
+  const records = await db.select().from(wardrobeItems).where(eq(wardrobeItems.userId, userId));
+  const all = records.map(itemApi);
   const item = all.find((i) => i.id === id);
   if (!item) throw new MvpError(404, "Garment not found.");
+  const sourcePaths = (record: Record<string, unknown>) => Array.isArray(record.sourceImagePaths)
+    ? record.sourceImagePaths.filter((path): path is string => typeof path === "string") : [];
   const profile = await profileFor(userId);
-  const retainedPaths = new Set(all.filter((i) => i.id !== id).flatMap((i) => i.imagePaths));
+  const retainedPaths = new Set(records.filter((row) => row.id !== id).flatMap((row) => [row.imagePath, ...row.additionalImagePaths, ...sourcePaths(row.record)]));
   if (profile.selfiePath) retainedPaths.add(profile.selfiePath);
-  const removedPaths = item.imagePaths.filter((p) => !retainedPaths.has(p));
+  const messages = await db.select().from(mvpMessages).where(eq(mvpMessages.userId, userId));
+  for (const message of messages) for (const path of message.attachments) retainedPaths.add(path);
+  const activeJobs = await db.select().from(mvpJobs).where(and(eq(mvpJobs.userId, userId), inArray(mvpJobs.status, ["pending", "running"])));
+  for (const job of activeJobs) for (const path of job.objectPaths) retainedPaths.add(path);
+  const removedPaths = [...new Set([...item.imagePaths, ...sourcePaths(records.find((row) => row.id === id)!.record)])].filter((path) => !retainedPaths.has(path));
   for (const path of removedPaths) {
     try { await (await storage.getObjectEntityFile(path)).delete({ ignoreNotFound: true }); }
     catch (error) { if (!(error instanceof Error && error.name === "ObjectNotFoundError")) throw error; }
@@ -108,7 +123,6 @@ router.delete("/wardrobe/:itemId", handler(async (req, res, userId) => {
     if (removedPaths.length) await tx.delete(wardrobeUploads).where(and(
       eq(wardrobeUploads.userId, userId), inArray(wardrobeUploads.objectPath, removedPaths),
     ));
-    const messages = await tx.select().from(mvpMessages).where(eq(mvpMessages.userId, userId));
     for (const message of messages) {
       const attachments = message.attachments.filter((p) => !removedPaths.includes(p));
       if (attachments.length !== message.attachments.length)

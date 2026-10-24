@@ -1,128 +1,65 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Check, RefreshCw, RotateCcw, Save } from "lucide-react";
-import type { MvpAttributes, MvpDraft } from "@workspace/api-client-react";
 import {
-  getGetMvpJobQueryKey,
-  getListMvpWardrobeQueryKey,
-  useConfirmMvpItem,
-  useGetMvpJob,
-  useStartMvpScan,
+  getGetMvpJobQueryKey, getListMvpJobsQueryKey, getListMvpWardrobeQueryKey, getListMvpMessagesQueryKey,
+  useCreateMvpStylingImage, useGetMvpJob, useStartMvpScan,
 } from "@workspace/api-client-react";
-import { AttributeEditor } from "./attribute-editor";
-import { GarmentPhoto } from "./garment-photo";
-import { displayName } from "../lib/mvp-utils";
-
-function errorStatus(error: unknown): number | undefined {
-  if (!error || typeof error !== "object") return undefined;
-  const item = error as { status?: number; response?: { status?: number }; cause?: { status?: number } };
-  return item.status ?? item.response?.status ?? item.cause?.status;
-}
+import { imageUrl } from "../lib/mvp-utils";
+import "./wardrobe-capture.css";
 
 type Props = { jobId: string; threadId: string; objectPaths: string[] };
-
 export function ScanJobCard({ jobId, threadId, objectPaths }: Props) {
   const queryClient = useQueryClient();
-  const [activeJobId, setActiveJobId] = useState(jobId);
-  const startScan = useStartMvpScan();
-  const query = useGetMvpJob(activeJobId, {
-    query: {
-      queryKey: getGetMvpJobQueryKey(activeJobId),
-      refetchInterval: (result) => result.state.data?.status === "pending" || result.state.data?.status === "running" ? 1800 : false,
-    },
-  });
-  const job = query.data;
-  const jobPending = job?.status === "pending" || job?.status === "running";
-
-  useEffect(() => setActiveJobId(jobId), [jobId]);
-
-  const retry = () => startScan.mutate(
-    { data: { objectPaths, threadId: threadId || undefined } },
-    {
-      onSuccess: (nextJob) => {
-        setActiveJobId(nextJob.id);
-        queryClient.invalidateQueries({ queryKey: getGetMvpJobQueryKey(nextJob.id) });
-      },
-    },
-  );
-
-  return (
-    <section className="scan-job" aria-live="polite">
-      {query.isLoading && <div className="loading-block"><div className="loading-pulse" />Checking your photo…</div>}
-      {query.isError && <div className="error-state compact-error"><h2>We could not check this scan.</h2><p>Your photo is still attached to this conversation. You can retry the connection.</p><button className="button button-small" type="button" onClick={() => query.refetch()}><RefreshCw size={13} /> Try again</button></div>}
-      {job && <>
-        <div className="scan-job-head">
-          <div>
-            <span className={`scan-state ${job.status === "failed" ? "failed" : ""}`}><i className="scan-state-dot" />{job.status === "pending" ? "Waiting" : job.status === "running" ? "Looking closely" : job.status === "failed" ? "Needs another try" : "Review before saving"}</span>
-            <h3 className="scan-job-title">{job.status === "completed" ? "What I noticed" : job.status === "failed" ? "The scan paused" : "A moment while I look"}</h3>
-          </div>
-          {jobPending && <RefreshCw size={15} className="spin" aria-label="Scanning" />}
-        </div>
-        {job.error && <div className="alert" style={{ marginTop: 12 }}>{job.error}</div>}
-        {job.warnings?.length > 0 && <div className="scan-warnings"><strong>Worth a second look</strong><br />{job.warnings.join(" ")}</div>}
-        {job.status === "failed" && <div style={{ marginTop: 13 }}><button type="button" className="button button-small" disabled={!objectPaths.length || startScan.isPending} onClick={retry}><RotateCcw size={13} /> Try the scan again</button></div>}
-        {job.status === "completed" && job.drafts.length === 0 && <div className="empty-state compact-empty"><div className="empty-mark"><AlertTriangle size={18} /></div><h2>No clear pieces found</h2><p>Try a closer, brighter photo with one garment at a time. Nothing has been added to your wardrobe.</p></div>}
-        {job.drafts.length > 0 && <div className="draft-list">{job.drafts.map((draft) => <GarmentDraft key={draft.id} draft={draft} jobId={activeJobId} />)}</div>}
-      </>}
-    </section>
-  );
-}
-
-function GarmentDraft({ draft, jobId }: { draft: MvpDraft; jobId: string }) {
-  const queryClient = useQueryClient();
-  const [attributes, setAttributes] = useState<MvpAttributes>(draft.attributes);
-  const [duplicateOffer, setDuplicateOffer] = useState(false);
+  const [activeJob, setActiveJob] = useState(jobId);
   const [error, setError] = useState("");
-  const confirmItem = useConfirmMvpItem();
-
-  useEffect(() => setAttributes(draft.attributes), [draft.id]);
-  const confirm = (allowDuplicate: boolean) => {
+  const notified = useRef<string | null>(null);
+  const scan = useStartMvpScan();
+  const visual = useCreateMvpStylingImage();
+  const query = useGetMvpJob(activeJob, { query: {
+    queryKey: getGetMvpJobQueryKey(activeJob),
+    refetchInterval: (query) => ["pending", "running"].includes(query.state.data?.status ?? "") ? 2000 : false,
+  } });
+  const job = query.data;
+  useEffect(() => { setActiveJob(jobId); }, [jobId]);
+  useEffect(() => {
+    if (job?.status !== "completed" || notified.current === job.id) return;
+    notified.current = job.id;
+    void queryClient.invalidateQueries({ queryKey: getListMvpWardrobeQueryKey() });
+    void queryClient.invalidateQueries({ queryKey: getListMvpJobsQueryKey() });
+  }, [job?.status, job?.id, queryClient]);
+  const retry = async () => {
     setError("");
-    setDuplicateOffer(false);
-    confirmItem.mutate(
-      { data: { jobId, draftId: draft.id, attributes, allowDuplicate } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListMvpWardrobeQueryKey() });
-          queryClient.invalidateQueries({ queryKey: getGetMvpJobQueryKey(jobId) });
-        },
-        onError: (reason) => {
-          if (errorStatus(reason) === 409 && !allowDuplicate) setDuplicateOffer(true);
-          else setError("This piece could not be saved. Review the details and try again.");
-        },
-      },
-    );
+    try {
+      const next = job?.kind === "styling_image" && job.sourceMessageId
+        ? await visual.mutateAsync({ threadId, data: { messageId: job.sourceMessageId } })
+        : await scan.mutateAsync({ data: { objectPaths: job?.objectPaths ?? objectPaths, threadId: threadId || undefined } });
+      setActiveJob(next.id);
+      await queryClient.invalidateQueries({ queryKey: getGetMvpJobQueryKey(next.id) });
+      if (threadId) void queryClient.invalidateQueries({ queryKey: getListMvpMessagesQueryKey(threadId) });
+    } catch { setError("Could not retry just now. Please try again."); }
   };
-
-  if (draft.confirmedItemId) return <div className="draft-card"><div className="draft-head"><span className="message-mark"><Check size={15} /></span><div className="draft-heading"><strong>{displayName(attributes)}</strong><span>Added to your wardrobe</span></div></div></div>;
-  const lowConfidence = attributes.confidence < 0.65;
-
-  return (
-    <article className="draft-card">
-      <div className="draft-head">
-        {draft.imagePaths[0] && <GarmentPhoto className="draft-thumb" path={draft.imagePaths[0]} alt={displayName(attributes)} />}
-        <div className="draft-heading"><strong>{displayName(attributes)}</strong><span>Review the details; nothing saves until you confirm.</span></div>
-        {lowConfidence && <span className="confidence-flag"><AlertTriangle size={12} /> Low confidence</span>}
-      </div>
-      {lowConfidence && <div className="scan-warnings" style={{ margin: "10px 13px 0" }}>Some details may be uncertain. Correct anything that does not match what you know.</div>}
-      <AttributeEditor value={attributes} onChange={setAttributes} />
-      {error && <div className="alert" style={{ margin: "0 13px 10px" }}>{error}</div>}
-      {duplicateOffer && (
-        <div className="duplicate-confirm" role="alert">
-          <p>This looks like the same photo as an item already saved. Keep a second copy anyway?</p>
-          <div className="duplicate-confirm-actions">
-            <button type="button" className="button button-small button-quiet" onClick={() => setDuplicateOffer(false)}>Keep existing</button>
-            <button type="button" className="button button-small" disabled={confirmItem.isPending} onClick={() => confirm(true)}>Save another copy</button>
-          </div>
-        </div>
-      )}
-      <div className="draft-footer">
-        <p>Corrections are saved as information you provided.</p>
-        <button type="button" className="button button-small" disabled={confirmItem.isPending} onClick={() => confirm(false)}>
-          {confirmItem.isPending ? <RefreshCw size={13} className="spin" /> : <Save size={13} />}
-          {confirmItem.isPending ? "Saving…" : "Confirm and add"}
-        </button>
-      </div>
-    </article>
-  );
+  return <section className="scan-job" aria-live="polite">
+    {query.isLoading && <p>Loading processing status…</p>}
+    {query.isError && <p role="alert">Status could not be loaded. <button type="button" className="text-button" onClick={() => query.refetch()}>Retry status</button></p>}
+    {job && ["pending", "running"].includes(job.status) && <p role="status">
+      {job.kind === "styling_image" ? "Creating your AI styling image… Your original photo stays unchanged." : "Separating garments and saving each item automatically…"}
+      <br /><small>You can leave this page; processing continues.</small>
+    </p>}
+    {job?.status === "failed" && <div role="alert"><p>{job.error || "Processing could not finish."}</p>
+      <button className="button button-small" type="button" disabled={scan.isPending || visual.isPending} onClick={retry}>Retry {job.kind === "styling_image" ? "styling image" : "capture"}</button></div>}
+    {job?.status === "completed" && job.kind === "styling_image" && job.imagePath && <figure className="styling-simulation">
+      <strong>Styling changes in Image</strong>
+      <img src={imageUrl(job.imagePath)} alt="AI-generated simulation of the suggested outfit styling changes" />
+      <figcaption>AI simulation—not a guarantee of fit or exact appearance. Suggested pieces may not be owned. Your original photo has not been changed.</figcaption>
+    </figure>}
+    {job?.status === "completed" && job.kind !== "styling_image" && <div>
+      <p>{job.drafts.some((draft) => draft.confirmedItemId)
+        ? `${job.drafts.filter((draft) => draft.confirmedItemId).length} items saved automatically. You can edit their details in Wardrobe.`
+        : job.drafts.length ? "This older scan needs a fresh upload to create separate item images." : "No clear garments were found. Try a well-lit photo showing each piece."}</p>
+      {threadId && <Link href="/wardrobe" className="button button-small">View wardrobe</Link>}
+    </div>}
+    {job?.warnings?.map((warning, index) => <p key={index} className="private-note">{warning}</p>)}
+    {error && <p role="alert">{error}</p>}
+  </section>;
 }

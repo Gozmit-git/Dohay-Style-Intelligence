@@ -173,7 +173,7 @@ export function ProfilePage() {
           <h2>More you.<br />Less guessing.</h2>
           <p>Style preferences help DOHAY remember the details you want it to know. Your actual wardrobe remains the source of truth.</p>
           <div className="aside-rule" />
-          <div className="aside-note"><ShieldCheck size={14} /><span>Photos are only uploaded after your clear permission. Every detected item still needs your review before it is saved.</span></div>
+          <div className="aside-note"><ShieldCheck size={14} /><span>Photos are only processed after your permission. Wardrobe items save automatically with AI-estimated details you can edit afterward.</span></div>
         </aside>
       </div>
     </div>

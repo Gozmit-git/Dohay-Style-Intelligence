@@ -63,7 +63,7 @@ function LandingPage() {
         <h1 className="landing-title">What should I<br />wear with <em>what I own?</em></h1>
         <p className="page-subtitle landing-lede">Take an outfit selfie and ask, “How do I look?” Get a quick fit check on colours, visible fit, and styling—no wardrobe setup needed.</p>
         <div className="landing-ctas"><Link className="button" href="/sign-up">Get a quick fit check <ArrowRight size={14} /></Link><Link className="button button-quiet" href="/sign-in">I already have an account</Link></div>
-        <div className="landing-trust"><span><ShieldMini /> Only your confirmed pieces</span><span><ShieldMini /> Photo consent is always yours</span></div>
+        <div className="landing-trust"><span><ShieldMini /> Only your saved pieces</span><span><ShieldMini /> Photo consent is always yours</span></div>
       </div>
       <div className="landing-image" role="img" aria-label="Illustration of a small edited wardrobe on a clothing rail">
         <div className="landing-rack" />
@@ -74,7 +74,7 @@ function LandingPage() {
     </section>
     <section className="landing-principles">
       <div><span className="eyebrow">A different kind of style help</span><h2>Advice that starts with your own hanger.</h2></div>
-      <div><p>Most styling starts with a shopping list. DOHAY starts by listening. Tell it where you’re going, add what you have, and get ideas made from pieces you have actually confirmed.</p><div className="landing-principle-list"><span><b>01</b> You set the context</span><span><b>02</b> Your closet sets the limits</span><span><b>03</b> You decide what gets saved</span></div></div>
+      <div><p>Most styling starts with a shopping list. DOHAY starts by listening. Tell it where you’re going, capture what you own in Wardrobe, and see ideas made from your saved pieces.</p><div className="landing-principle-list"><span><b>01</b> You set the context</span><span><b>02</b> Your closet sets the limits</span><span><b>03</b> You can edit every detail</span></div></div>
     </section>
     <section className="landing-ritual">
       <span className="eyebrow">A small daily ritual</span>

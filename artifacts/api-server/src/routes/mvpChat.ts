@@ -1,18 +1,23 @@
 import { Router } from "express";
 import { and, desc, eq } from "drizzle-orm";
-import { db, mvpProfiles, mvpThreads, wardrobeUploads } from "@workspace/db";
+import { db, mvpMessages, mvpProfiles, mvpThreads, wardrobeUploads } from "@workspace/db";
 import * as api from "@workspace/api-zod";
 import { handler, input, param } from "../lib/mvpHttp";
 import {
   addMessage, consentFor, imageDataFor, itemsFor, messagesFor, MvpError, profileFor, storage,
   threadApi, threadFor, uploadsFor,
 } from "../lib/mvpData";
-import { createScanJob } from "../lib/mvpJobs";
+import { createStylingImageJob } from "../lib/mvpJobs";
 import { postToAiService } from "../lib/wardrobeAi";
 import { weatherContext } from "../lib/outfitEngine";
 import { formatStylingContext } from "../lib/stylingContext";
 
 const router = Router();
+router.post("/threads/:threadId/styling-image", handler(async (req, res, userId) => {
+  const data = input(api.CreateMvpStylingImageBody, req.body);
+  res.status(202).json(api.CreateMvpStylingImageResponse.parse(
+    await createStylingImageJob(userId, param(req, "threadId"), data.messageId)));
+}));
 router.get("/profile", handler(async (_req, res, userId) => {
   res.json(api.GetMvpProfileResponse.parse(await profileFor(userId)));
 }));
@@ -59,6 +64,7 @@ router.post("/threads/:threadId/messages", handler(async (req, res, userId) => {
   const data = input(api.SendMvpMessageBody, req.body);
   const paths = data.objectPaths || [];
   const isFitCheck = data.photoPurpose !== "wardrobe";
+  if (paths.length && !isFitCheck) throw new MvpError(400, "Use the Wardrobe section to upload or take garment photos.");
   if (isFitCheck && paths.length > 3) throw new MvpError(400, "Use up to three outfit photos for a quick fit check.");
   if (!data.content.trim() && !paths.length) throw new MvpError(400, "Type a message or attach a clothing photo.");
   if (paths.length) { await consentFor(userId); await uploadsFor(userId, paths); }
@@ -69,7 +75,7 @@ router.post("/threads/:threadId/messages", handler(async (req, res, userId) => {
     currentContext = formatStylingContext(resolved.context, resolved.warnings);
     if (currentContext) content += `\n\n${currentContext}`;
   }
-  await addMessage(userId, threadId, "user",
+  const photoMessage = await addMessage(userId, threadId, "user",
     content,
     paths, { intent: paths.length && !isFitCheck ? "add_wardrobe" : "chat" });
   if (thread.title === "New conversation") await db.update(mvpThreads).set({
@@ -77,24 +83,29 @@ router.post("/threads/:threadId/messages", handler(async (req, res, userId) => {
   }).where(and(eq(mvpThreads.id, threadId), eq(mvpThreads.userId, userId)));
   if (paths.length && isFitCheck) {
     try {
-      const result = await postToAiService<{ reply: string }>("/fit-check", {
+      const result = await postToAiService<{ reply: string; canVisualize: boolean }>("/fit-check", {
         images: await imageDataFor(userId, paths), message: content,
         profile: await profileFor(userId),
       });
-      const message = await addMessage(userId, threadId, "assistant", result.reply);
-      res.json(api.SendMvpMessageResponse.parse(message));
+      const canVisualize = result.canVisualize === true;
+      await db.update(mvpMessages).set({ meta: { intent: "chat", canVisualize } }).where(eq(mvpMessages.id, photoMessage.id));
+      const message = await addMessage(userId, threadId, "assistant", result.reply, [], { canVisualize });
+      if (!canVisualize) {
+        res.json(api.SendMvpMessageResponse.parse(message));
+        return;
+      }
+      try {
+        const job = await createStylingImageJob(userId, threadId, message.id);
+        res.json(api.SendMvpMessageResponse.parse({ ...message, jobId: job.id }));
+      } catch {
+        const content = message.content + "\n\nThe styling image could not be queued. Choose “Styling changes in Image” below to retry; your original photo is unchanged.";
+        await db.update(mvpMessages).set({ content }).where(eq(mvpMessages.id, message.id));
+        res.json(api.SendMvpMessageResponse.parse({ ...message, content }));
+      }
       return;
     } catch (error) {
       throw new MvpError(502, error instanceof Error ? error.message : "Your fit check could not finish. Please retry.");
     }
-  }
-  if (paths.length) {
-    const job = await createScanJob(userId, paths, threadId);
-    const message = await addMessage(userId, threadId, "assistant",
-      "I’m checking your photos for clothing and accessories. I’ll show you editable suggestions—nothing enters your wardrobe until you confirm it.",
-      [], { jobId: job.id, intent: "add_wardrobe" });
-    res.json(api.SendMvpMessageResponse.parse(message));
-    return;
   }
   const history = await messagesFor(userId, threadId);
   const profile = await profileFor(userId);

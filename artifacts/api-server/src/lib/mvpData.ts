@@ -44,6 +44,7 @@ export function messageApi(row: typeof mvpMessages.$inferSelect): MvpMessage {
     id: row.id, threadId: row.threadId, role: row.role as "user" | "assistant",
     content: row.content, attachments: row.attachments,
     jobId: typeof row.meta.jobId === "string" ? row.meta.jobId : null,
+    canVisualize: typeof row.meta.canVisualize === "boolean" ? row.meta.canVisualize : undefined,
     outfitIds: (row.meta.outfitIds as string[]) ?? [],
     intent: (row.meta.intent as MvpMessage["intent"]) ?? "chat",
     suggestedContext: (row.meta.suggestedContext as MvpContext) ?? null,
@@ -134,6 +135,10 @@ export async function imageDataFor(userId: string, paths: string[]) {
 }
 export function jobApi(row: typeof mvpJobs.$inferSelect): MvpJob {
   return {
+    kind: row.result.kind === "styling_image" ? "styling_image" : "scan",
+    imagePath: typeof row.result.imagePath === "string" ? row.result.imagePath : null,
+    sourceMessageId: typeof row.result.sourceMessageId === "string" ? row.result.sourceMessageId : null,
+    objectPaths: row.objectPaths,
     id: row.id, status: row.status as MvpJob["status"], threadId: row.threadId,
     drafts: (row.result.drafts as MvpDraft[]) ?? [],
     warnings: (row.result.warnings as string[]) ?? [], error: row.error,

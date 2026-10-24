@@ -16,7 +16,7 @@ export async function postToAiService<T>(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(180_000),
+    signal: AbortSignal.timeout(path === "/styling-image" || path === "/scan" ? 300_000 : 180_000),
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { detail?: unknown } | null;
