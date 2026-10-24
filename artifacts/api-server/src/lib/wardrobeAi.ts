@@ -40,11 +40,13 @@ export function analyzeGarmentPhotos(
 export function replyAboutGarment(
   input: GarmentChatInput,
   savedItem?: WardrobeItem,
+  wardrobe: WardrobeItem[] = [],
 ): Promise<unknown> {
   return postToAiService("/chat", {
     analysis: input.analysis,
     messages: input.messages,
     savedItem: savedItem ?? null,
+    wardrobe,
   });
 }
 

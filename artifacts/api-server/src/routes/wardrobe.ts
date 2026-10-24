@@ -141,6 +141,7 @@ router.post(
 
     try {
       let savedItem: WardrobeItem | undefined;
+      let wardrobe: WardrobeItem[] = [];
       if (parsed.data.savedItemId) {
         const row = await getOwnedItem(userId, parsed.data.savedItemId);
         if (!row) {
@@ -148,10 +149,17 @@ router.post(
           return;
         }
         savedItem = asWardrobeItem(row);
+        const wardrobeRows = await db
+          .select()
+          .from(wardrobeItems)
+          .where(eq(wardrobeItems.userId, userId))
+          .orderBy(desc(wardrobeItems.createdAt))
+          .limit(100);
+        wardrobe = wardrobeRows.map(asWardrobeItem);
       }
 
       const reply = ChatAboutGarmentResponse.parse(
-        await replyAboutGarment(parsed.data, savedItem),
+        await replyAboutGarment(parsed.data, savedItem, wardrobe),
       );
       res.json(reply);
     } catch (error) {
@@ -172,8 +180,7 @@ router.get(
       .select()
       .from(wardrobeItems)
       .where(eq(wardrobeItems.userId, userId))
-      .orderBy(desc(wardrobeItems.createdAt))
-      .limit(100);
+      .orderBy(desc(wardrobeItems.createdAt));
     res.json(ListWardrobeItemsResponse.parse(rows.map(asWardrobeItem)));
   },
 );
@@ -259,8 +266,7 @@ router.get(
       .select()
       .from(wardrobeItems)
       .where(eq(wardrobeItems.userId, userId))
-      .orderBy(desc(wardrobeItems.createdAt))
-      .limit(100);
+      .orderBy(desc(wardrobeItems.createdAt));
     const items = rows.map(asWardrobeItem);
     const categoryCounts = items.reduce<Record<string, number>>((counts, item) => {
       counts[item.category] = (counts[item.category] ?? 0) + 1;

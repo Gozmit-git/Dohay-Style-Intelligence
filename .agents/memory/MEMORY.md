@@ -1,0 +1,1 @@
+- [Workspace dependency linking](workspace-dependency-linking.md) — newly copied workspace packages may need a full install even after a filtered dependency add.

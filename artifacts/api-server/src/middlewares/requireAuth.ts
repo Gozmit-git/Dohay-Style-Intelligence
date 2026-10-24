@@ -14,7 +14,10 @@ export function requireAuth(
   res: Response,
   next: NextFunction,
 ): void {
-  const userId = getAuth(req).userId;
+  const auth = getAuth(req);
+  const claimedUserId = auth.sessionClaims?.userId;
+  const userId =
+    typeof claimedUserId === "string" ? claimedUserId : auth.userId;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;

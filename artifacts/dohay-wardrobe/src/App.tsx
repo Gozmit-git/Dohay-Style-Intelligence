@@ -129,7 +129,12 @@ function WardrobePage() {
   const [category, setCategory] = useState('All pieces');
   const [recommendItem, setRecommendItem] = useState<WardrobeItem | null>(null);
   const [prompt, setPrompt] = useState('');
+  const [savedChatMessages, setSavedChatMessages] = useState<ChatMessage[]>([]);
+  const [savedChatText, setSavedChatText] = useState('');
+  const savedChatItemId = useRef<string | null>(null);
+  const savedChatSession = useRef(0);
   const recommend = useRecommendOutfits();
+  const savedChat = useChatAboutGarment();
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
@@ -140,9 +145,46 @@ function WardrobePage() {
 
   const categories = useMemo(() => ['All pieces', ...Array.from(new Set((items ?? []).map((item) => item.category).filter(Boolean)))], [items]);
   const shownItems = (items ?? []).filter((item) => category === 'All pieces' || item.category === category);
-  const runRecommendation = (item: WardrobeItem) => {
+  const selectWardrobeItem = (item: WardrobeItem) => {
+    savedChatSession.current += 1;
+    savedChatItemId.current = item.id;
     setRecommendItem(item);
-    recommend.mutate({ data: { itemId: item.id, ...(prompt.trim() ? { prompt: prompt.trim() } : {}) } });
+    setSavedChatMessages([]);
+    setSavedChatText('');
+    setPrompt('');
+    recommend.reset();
+    savedChat.reset();
+  };
+  const runRecommendation = (item: WardrobeItem, actionPrompt?: string) => {
+    setRecommendItem(item);
+    recommend.reset();
+    const recommendationPrompt = [actionPrompt, actionPrompt ? prompt.trim() : ''].filter(Boolean).join(' — ') || prompt.trim();
+    recommend.mutate({ data: { itemId: item.id, ...(recommendationPrompt ? { prompt: recommendationPrompt } : {}) } });
+  };
+  const askAboutSavedItem = async (content: string) => {
+    if (!recommendItem || !content.trim() || savedChat.isPending) return;
+    const item = recommendItem;
+    const session = savedChatSession.current;
+    const userMessage: ChatMessage = { role: 'user', content: content.trim() };
+    const updated = [...savedChatMessages, userMessage];
+    setSavedChatMessages(updated);
+    setSavedChatText('');
+    try {
+      const result = await savedChat.mutateAsync({
+        data: {
+          analysis: analysisForSavedItem(item),
+          messages: updated,
+          savedItemId: item.id,
+        },
+      });
+      if (savedChatItemId.current === item.id && savedChatSession.current === session) {
+        setSavedChatMessages([...updated, { role: 'assistant', content: result.reply }]);
+      }
+    } catch {
+      if (savedChatItemId.current === item.id && savedChatSession.current === session) {
+        setSavedChatMessages([...updated, { role: 'assistant', content: 'I couldn’t get an answer just now. Please try again.' }]);
+      }
+    }
   };
 
   if (!signedIn) return <SignedOut />;
@@ -184,20 +226,42 @@ function WardrobePage() {
                     <div className="color-dots">{[item.primaryColor, ...item.secondaryColors].slice(0, 3).map((color, i) => <span key={`${color}-${i}`} className="color-dot" title={color} style={{ background: namedColor(color) }} />)}</div>
                     <span className="confidence">{item.pattern || item.style || 'Saved piece'}</span>
                   </div>
-                  <div className="card-actions"><button className="button button-secondary" onClick={() => runRecommendation(item)} disabled={recommend.isPending} data-testid={`button-outfit-${item.id}`}><Sparkles size={13} /> Outfit ideas</button></div>
+                  <div className="card-actions"><button className="button button-secondary" onClick={() => selectWardrobeItem(item)} data-testid={`button-outfit-${item.id}`}><Sparkles size={13} /> Explore this piece</button></div>
                 </div>
               </article>
             ))}</div> : <div className="empty-panel"><div className="empty-icon"><Shirt /></div><h3>No {category.toLowerCase()} yet.</h3><p>Try another category or add a piece to your collection.</p></div>}
           </>}
       </section>
 
-      {recommendItem && <section className="recommend-layout" aria-live="polite">
-        <div><span className="eyebrow">A fresh way to wear it</span><h2>Style this piece</h2><p>Ideas are built from your saved wardrobe. Add a mood, occasion, or weather note if you like.</p></div>
-        <button className="button" onClick={() => runRecommendation(recommendItem)} disabled={recommend.isPending} data-testid="button-generate-outfits">{recommend.isPending ? <Loader2 className="spin-icon" size={15} /> : <Sparkles size={15} />}{recommend.isPending ? 'Thinking…' : 'Suggest outfits'}</button>
+      {recommendItem && <section className="recommend-layout" aria-live="polite" data-testid={`panel-item-context-${recommendItem.id}`}>
+        <div><span className="eyebrow">A fresh way to wear it</span><h2>{recommendItem.primaryColor} {recommendItem.subtype || recommendItem.category}</h2><p>Choose a direction, or ask something about this saved piece. You can return to another item at any time.</p></div>
+        <button className="button button-quiet" onClick={() => setRecommendItem(null)} data-testid="button-close-item-context"><X size={14} /> Close</button>
+        <div className="context-actions" aria-label="Ways to explore this item">
+          <button className="context-action" onClick={() => runRecommendation(recommendItem, 'What can I wear with this?')} disabled={recommend.isPending} data-testid="action-what-can-i-wear"><Sparkles size={14} />What can I wear with this?</button>
+          <button className="context-action" onClick={() => void askAboutSavedItem('Which occasions is this suitable for?')} disabled={savedChat.isPending} data-testid="action-occasions"><MessageCircle size={14} />Which occasions is this suitable for?</button>
+          <button className="context-action" onClick={() => runRecommendation(recommendItem, 'Show me outfits using this item.')} disabled={recommend.isPending} data-testid="action-outfit-ideas"><Sparkles size={14} />Show me outfits using this item</button>
+          <button className="context-action" onClick={() => runRecommendation(recommendItem, 'How can I style this differently?')} disabled={recommend.isPending} data-testid="action-style-differently"><Sparkles size={14} />How can I style this differently?</button>
+          <button className="context-action" onClick={() => void askAboutSavedItem('Does this fill a gap in my wardrobe?')} disabled={savedChat.isPending} data-testid="action-wardrobe-gap"><MessageCircle size={14} />Does this fill a gap in my wardrobe?</button>
+        </div>
         <div className="recommend-result">
-          <label className="field" style={{ marginTop: 0 }}><span className="small-help">Optional direction</span><input value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="A relaxed gallery afternoon…" data-testid="input-outfit-prompt" /></label>
-          {recommend.isError && <div className="alert" role="alert">Outfit ideas are taking a moment. Try again.</div>}
+          <label className="field" style={{ marginTop: 0 }}><span className="small-help">Optional direction for outfit ideas</span><input value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="A relaxed gallery afternoon…" data-testid="input-outfit-prompt" /></label>
+          <button className="button button-secondary" onClick={() => runRecommendation(recommendItem)} disabled={recommend.isPending} data-testid="button-generate-outfits">{recommend.isPending ? <Loader2 className="spin-icon" size={15} /> : <Sparkles size={15} />}{recommend.isPending ? 'Thinking…' : 'Suggest outfits'}</button>
+          {recommend.isPending && <p role="status">Putting a few combinations together…</p>}
+          {recommend.isError && <div className="alert" role="alert">Outfit ideas are taking a moment. Try one of the outfit prompts again.</div>}
           {recommend.data && <><p>{recommend.data.introduction}</p><div className="outfit-list">{recommend.data.outfits.map((outfit, index) => <article className="outfit-card" key={`${outfit.name}-${index}`}><h3>{outfit.name}</h3><div className="eyebrow">The combination</div><p>{outfit.pieces.join(' · ')}</p><p>{outfit.rationale}</p></article>)}</div></>}
+          <div className="saved-chat">
+            <div className="chat-head"><MessageCircle size={15} /> Ask about this saved piece</div>
+            <div className="chat-history" aria-live="polite">
+              {!savedChatMessages.length && <p className="small-help">Ask about occasions, wardrobe gaps, or anything else about this garment.</p>}
+              {savedChatMessages.map((message, index) => <div className={`chat-bubble ${message.role}`} key={`${recommendItem.id}-${index}-${message.role}`}>{message.content}</div>)}
+              {savedChat.isPending && <div className="chat-bubble assistant">Thinking it through…</div>}
+            </div>
+            <form className="chat-compose" onSubmit={(event) => { event.preventDefault(); void askAboutSavedItem(savedChatText); }}>
+              <input className="chat-input" value={savedChatText} onChange={(event) => setSavedChatText(event.target.value)} placeholder="Ask another question about this piece…" maxLength={2000} aria-label="Ask about the saved garment" data-testid="input-saved-item-chat" />
+              <button className="button" type="submit" disabled={!savedChatText.trim() || savedChat.isPending} aria-label="Send saved item question" data-testid="button-send-saved-chat"><Send size={15} /></button>
+            </form>
+            {savedChat.isError && <p className="small-help" role="alert">The saved-item conversation could not be continued. Please try again.</p>}
+          </div>
         </div>
       </section>}
       {notice && <div className="toast-message" role="status">{notice}</div>}
@@ -211,17 +275,40 @@ function namedColor(value: string): string {
   return colorMap[key] ?? '#a5a393';
 }
 
+function analysisForSavedItem(item: WardrobeItem): GarmentAnalysis {
+  // This client-shaped object only fulfills the chat request schema. savedItemId
+  // is authoritative; the backend should load the saved record by that ID.
+  return {
+    category: item.category,
+    subtype: item.subtype,
+    primaryColor: item.primaryColor,
+    secondaryColors: item.secondaryColors,
+    pattern: item.pattern,
+    designDetails: item.designDetails,
+    silhouette: item.silhouette,
+    fitEstimate: item.fit ?? '',
+    style: item.style,
+    fabricEstimate: item.fabricEstimate ?? '',
+    constructionFeatures: item.constructionFeatures,
+    occasions: item.occasions,
+    seasons: item.seasons,
+    confidenceNote: 'Context is the saved wardrobe record.',
+    labelPhotoSuggestion: false,
+    attributeSources: item.attributeSources,
+  };
+}
+
 type LocalPhoto = { file: File; preview: string };
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
 type DraftFields = {
   category: string; subtype: string; primaryColor: string; secondaryColors: string; pattern: string;
-  designDetails: string; silhouette: string; fit: string; style: string; fabricEstimate: string;
+  designDetails: string; silhouette: string; fit: string; style: string; fabricEstimate: string; fabricComposition: string;
   constructionFeatures: string; occasions: string; seasons: string; brand: string; size: string;
   purchasePrice: string; purchaseDate: string; notes: string;
 };
 const emptyFields: DraftFields = {
   category: '', subtype: '', primaryColor: '', secondaryColors: '', pattern: '', designDetails: '',
-  silhouette: '', fit: '', style: '', fabricEstimate: '', constructionFeatures: '', occasions: '',
+  silhouette: '', fit: '', style: '', fabricEstimate: '', fabricComposition: '', constructionFeatures: '', occasions: '',
   seasons: '', brand: '', size: '', purchasePrice: '', purchaseDate: '', notes: '',
 };
 const splitList = (value: string) => value.split(',').map((part) => part.trim()).filter(Boolean);
@@ -337,7 +424,7 @@ function CapturePage() {
       subtype: fields.subtype.trim(), primaryColor: fields.primaryColor.trim(), secondaryColors: splitList(fields.secondaryColors),
       pattern: fields.pattern.trim(), designDetails: splitList(fields.designDetails), silhouette: fields.silhouette.trim(),
       fit: fields.fit.trim() || null, style: fields.style.trim(), fabricEstimate: fields.fabricEstimate.trim() || null,
-      fabricComposition: null, constructionFeatures: splitList(fields.constructionFeatures), occasions: splitList(fields.occasions),
+      fabricComposition: fields.fabricComposition.trim() || null, constructionFeatures: splitList(fields.constructionFeatures), occasions: splitList(fields.occasions),
       seasons: splitList(fields.seasons), brand: fields.brand.trim() || null, size: fields.size.trim() || null,
       purchasePrice: fields.purchasePrice.trim() ? Number(fields.purchasePrice) : null, purchaseDate: fields.purchaseDate || null,
       notes: fields.notes.trim() || null, attributeSources: approvedAttributeSources(analysis, fields), allowDuplicate,
@@ -459,6 +546,7 @@ function CapturePage() {
               </div>
               <div className="field"><label htmlFor="design-details">Design details, comma separated</label><textarea id="design-details" value={fields.designDetails} onChange={(e) => setField('designDetails', e.target.value)} data-testid="input-design-details" /></div>
               <div className="field"><label htmlFor="fabric-estimate">Fabric appearance <span className="small-help">Estimate only — not composition</span></label><input className="estimate-field" id="fabric-estimate" value={fields.fabricEstimate} onChange={(e) => setField('fabricEstimate', e.target.value)} placeholder="For example: appears softly textured" data-testid="input-fabric-estimate" /></div>
+              <div className="field"><label htmlFor="fabric-composition">Fabric composition (reported by you)</label><input id="fabric-composition" value={fields.fabricComposition} onChange={(e) => setField('fabricComposition', e.target.value)} placeholder="Only details you’ve confirmed from the label" data-testid="input-fabric-composition" /><span className="small-help">We can’t determine composition from appearance; only enter a label detail or something you know.</span></div>
               <div className="field"><label htmlFor="construction">Visible construction details</label><textarea id="construction" value={fields.constructionFeatures} onChange={(e) => setField('constructionFeatures', e.target.value)} data-testid="input-construction" /></div>
               <div className="form-row">
                 <TextField label="Brand (only if you know it)" value={fields.brand} onChange={(v) => setField('brand', v)} testId="input-brand" />
@@ -493,6 +581,12 @@ function approvedAttributeSources(analysis: GarmentAnalysis, fields: DraftFields
     constructionfeatures: { value: fields.constructionFeatures, original: analysis.constructionFeatures.join(', '), fallback: 'visually_observed' },
     occasions: { value: fields.occasions, original: analysis.occasions.join(', '), fallback: 'AI_estimate' },
     seasons: { value: fields.seasons, original: analysis.seasons.join(', '), fallback: 'AI_estimate' },
+    fabriccomposition: { value: fields.fabricComposition, original: '', fallback: 'user_provided' },
+    brand: { value: fields.brand, original: '', fallback: 'user_provided' },
+    size: { value: fields.size, original: '', fallback: 'user_provided' },
+    purchaseprice: { value: fields.purchasePrice, original: '', fallback: 'user_provided' },
+    purchasedate: { value: fields.purchaseDate, original: '', fallback: 'user_provided' },
+    notes: { value: fields.notes, original: '', fallback: 'user_provided' },
   };
   const included = new Set<string>();
   const result = analysis.attributeSources.map((entry) => {
@@ -509,17 +603,13 @@ function approvedAttributeSources(analysis: GarmentAnalysis, fields: DraftFields
         attribute: ({
           primarycolor: 'primaryColor', fabricestimate: 'fabricEstimate', secondarycolors: 'secondaryColors',
           designdetails: 'designDetails', constructionfeatures: 'constructionFeatures',
+          fabriccomposition: 'fabricComposition', purchaseprice: 'purchasePrice', purchasedate: 'purchaseDate',
         } as Record<string, string>)[key] ?? key,
         value: entry.value,
         source: entry.value.trim() !== entry.original.trim() ? 'user_provided' : entry.fallback,
       });
     }
   });
-  if (fields.brand.trim()) result.push({ attribute: 'brand', value: fields.brand.trim(), source: 'user_provided' });
-  if (fields.size.trim()) result.push({ attribute: 'size', value: fields.size.trim(), source: 'user_provided' });
-  if (fields.purchasePrice.trim()) result.push({ attribute: 'purchasePrice', value: fields.purchasePrice.trim(), source: 'user_provided' });
-  if (fields.purchaseDate.trim()) result.push({ attribute: 'purchaseDate', value: fields.purchaseDate.trim(), source: 'user_provided' });
-  if (fields.notes.trim()) result.push({ attribute: 'notes', value: fields.notes.trim(), source: 'user_provided' });
   return result;
 }
 

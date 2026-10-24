@@ -89,6 +89,7 @@ class ChatRequest(StrictModel):
     analysis: GarmentAnalysis
     messages: list[ChatMessage] = Field(min_length=1, max_length=30)
     savedItem: dict[str, object] | None = None
+    wardrobe: list[dict[str, object]] = Field(default_factory=list)
 
 
 class Outfit(StrictModel):
@@ -118,11 +119,20 @@ def parse_json_response(content: str | None, model: type[BaseModel]) -> BaseMode
     return model.model_validate_json(content)
 
 
-async def complete_json(messages: list[dict[str, object]]) -> str:
+async def complete_json(
+    messages: list[dict[str, object]], response_model: type[BaseModel]
+) -> str:
     response = await client.chat.completions.create(
         model=MODEL,
         max_completion_tokens=8192,
-        response_format={"type": "json_object"},
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": response_model.__name__,
+                "strict": True,
+                "schema": response_model.model_json_schema(),
+            },
+        },
         messages=messages,  # type: ignore[arg-type]
     )
     content = response.choices[0].message.content
@@ -181,7 +191,9 @@ async def analyze(request: AnalyzeRequest) -> GarmentAnalysis:
         {"role": "user", "content": content_parts},
     ]
     try:
-        result = parse_json_response(await complete_json(messages), GarmentAnalysis)
+        result = parse_json_response(
+            await complete_json(messages, GarmentAnalysis), GarmentAnalysis
+        )
         return GarmentAnalysis.model_validate(result)
     except Exception as error:
         logger.exception("Garment analysis failed")
@@ -197,6 +209,11 @@ async def chat(request: ChatRequest) -> ChatResponse:
         if request.savedItem
         else ""
     )
+    wardrobe_context = (
+        f" Relevant saved wardrobe: {json.dumps(request.wardrobe, ensure_ascii=False)}"
+        if request.savedItem
+        else ""
+    )
     messages: list[dict[str, object]] = [
         {
             "role": "system",
@@ -207,8 +224,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
                 "Record user statements as user-reported; a readable care label is "
                 "needed to mark composition as label-verified. Never claim exact fiber "
                 "composition, GSM, brand, price, or quality from appearance alone. "
+                "Use the authoritative saved item and wardrobe when provided; distinguish "
+                "items the user owns from optional additions. "
                 f"Current analysis: {request.analysis.model_dump_json()}"
-                f"{saved_item_context}"
+                f"{saved_item_context}{wardrobe_context}"
             ),
         },
         *[
@@ -265,7 +284,8 @@ async def recommendations(
     ]
     try:
         result = parse_json_response(
-            await complete_json(messages), RecommendationResponse
+            await complete_json(messages, RecommendationResponse),
+            RecommendationResponse,
         )
         return RecommendationResponse.model_validate(result)
     except Exception as error:
