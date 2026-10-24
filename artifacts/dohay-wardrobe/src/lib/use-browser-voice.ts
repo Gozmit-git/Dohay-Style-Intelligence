@@ -186,3 +186,12 @@ export function useBrowserVoice(onTranscript: (text: string) => void) {
 }
 
 export type BrowserVoice = ReturnType<typeof useBrowserVoice>;
+
+export function useBrowserVoiceScope(
+  voice: Pick<BrowserVoice, "stopAll" | "setAutoSpeak">,
+  threadId: string | null,
+  userId: string | undefined,
+) {
+  useEffect(() => { voice.stopAll(); }, [threadId, voice.stopAll]);
+  useEffect(() => { voice.stopAll(); voice.setAutoSpeak(false); }, [userId, voice.stopAll, voice.setAutoSpeak]);
+}

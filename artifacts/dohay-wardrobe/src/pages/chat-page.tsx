@@ -25,7 +25,8 @@ import {
 import { OutfitBoard } from "../components/outfit-board";
 import { ScanJobCard } from "../components/scan-job-card";
 import { imageUrl } from "../lib/mvp-utils";
-import { useBrowserVoice } from "../lib/use-browser-voice";
+import { useBrowserVoice, useBrowserVoiceScope } from "../lib/use-browser-voice";
+import { speakReplyIfEnabled } from "../lib/voice-utils";
 import { VoiceControls } from "../components/voice-controls";
 import { ChatPreferences } from "../components/chat-preferences";
 import "../components/chat-preferences.css";
@@ -134,8 +135,7 @@ export function ChatPage() {
   const voice = useBrowserVoice(setText);
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
-  useEffect(() => { voice.stopAll(); }, [activeThreadId, voice.stopAll]);
-  useEffect(() => { voice.stopAll(); voice.setAutoSpeak(false); }, [user?.id, voice.stopAll, voice.setAutoSpeak]);
+  useBrowserVoiceScope(voice, activeThreadId, user?.id);
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   const photoPurpose = "fit_check";
   const photosRef = useRef(photos);
@@ -353,7 +353,7 @@ export function ChatPage() {
         longitude: context.useWeather ? context.longitude : null,
       } : undefined;
       const reply = await sendMessage.mutateAsync({ threadId, data: { content: finalContent, objectPaths, photoPurpose, stylingContext } });
-      if (voiceRef.current.autoSpeak) voiceRef.current.speak(reply.id, reply.content);
+      speakReplyIfEnabled(voiceRef.current, reply.id, reply.content);
       const messageKey = getListMvpMessagesQueryKey(threadId);
       setActiveThreadId(threadId);
       // Show the confirmed server reply immediately, even if a background

@@ -16,3 +16,11 @@ export function speechChunks(text: string, maxLength = 160): string[] {
   if (remaining) chunks.push(remaining);
   return chunks;
 }
+
+export function speakReplyIfEnabled(
+  voice: { autoSpeak: boolean; speak: (id: string, text: string) => void },
+  id: string,
+  text: string,
+): void {
+  if (voice.autoSpeak) voice.speak(id, text);
+}
