@@ -599,13 +599,13 @@ export function ChatPage() {
         </div>}
         {sendError && <div className="chat-error">{sendError}<button type="button" className="text-retry" onClick={() => setSendError("")}>Dismiss</button></div>}
         <div className="composer">
-          <VoiceControls voice={voice} draft={text} disabled={isBusy} />
           <h2 className="composer-heading">Styling changes in image</h2>
           <p className="composer-description">AI preview · your original stays unchanged · not a fit guarantee.</p>
           {photos.length > 0 && <div className="attachment-tray">{photos.map((photo) => <div className="attachment-thumb" key={photo.id}><img src={photo.preview} alt={photo.file.name} /><button type="button" className="attachment-remove" aria-label={`Remove ${photo.file.name}`} onClick={() => removePhoto(photo.id)}><X size={12} /></button></div>)}</div>}
           <textarea value={text} maxLength={4000} onChange={(event) => { if (voice.listening) voice.stopListening(); setText(event.target.value); }} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void handleSend(); } }} placeholder="Type or dictate what you’re deciding…" aria-label="Message DOHAY" />
           <div className="composer-toolbar">
             <div className="composer-tools">
+              <VoiceControls voice={voice} draft={text} disabled={isBusy} />
               <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => selfiePicker.current?.click()}><Camera size={15} /><span>Take outfit selfie</span></button>
               <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => picker.current?.click()} title={!hasImageConsent ? "Give photo consent first" : "Choose photos"}><Plus size={15} /><span>Choose photos</span></button>
               <input ref={selfiePicker} type="file" hidden accept="image/jpeg,image/png,image/webp" capture="user" onChange={(event) => { addFiles(event.target.files); event.target.value = ""; }} />

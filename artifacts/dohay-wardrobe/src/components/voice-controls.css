@@ -1,13 +1,6 @@
-.voice-panel { padding: 7px 12px 0; }
-.voice-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-.voice-toolbar .button { min-height: 30px; padding: 6px 9px; font-size: 10px; gap: 5px; }
-.voice-auto { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; cursor: pointer; }
-.voice-auto input { accent-color: #3d6255; }
-.voice-note { margin: 4px 0 0; font-size: 9px; line-height: 1.3; color: #657168; }
-.voice-settings { font-size: 10px; }
-.voice-settings summary { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
-.voice-settings-fields { display: flex; flex-wrap: wrap; gap: 10px; padding: 8px 0; }
-.voice-settings-fields label { display: flex; flex-direction: column; gap: 5px; font-size: 10px; }
-.voice-settings-fields select { width: min(230px, 100%); max-width: 100%; border: 1px solid #dcd8cc; border-radius: 8px; padding: 7px; background: #faf8f2; color: #304a40; }
+.voice-dictate { flex: none; }
+.voice-dictate.listening { background: hsl(var(--destructive)/.08); color: hsl(var(--destructive)); }
+.voice-inline-error { flex-basis: 100%; color: hsl(var(--destructive)); font-size: 9px; line-height: 1.4; }
+.voice-inline-error button { margin-left: 4px; border: 0; background: transparent; color: inherit; font-size: inherit; text-decoration: underline; cursor: pointer; }
 .voice-reply-button { display: inline-flex; align-items: center; gap: 5px; margin-left: 10px; border: 0; background: transparent; color: #3d6255; font: inherit; cursor: pointer; padding: 4px; }
-.voice-reply-button:focus-visible, .voice-settings summary:focus-visible { outline: 2px solid #3d6255; outline-offset: 3px; border-radius: 3px; }
+.voice-reply-button:focus-visible { outline: 2px solid #3d6255; outline-offset: 3px; border-radius: 3px; }
