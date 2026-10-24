@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { ArrowRight, Check, Copy, ExternalLink, ShieldCheck } from "lucide-react";
 import {
   useCreateBillingQuote,
@@ -18,7 +18,7 @@ type Interval = "month" | "year";
 const UPI_ID = "sagarlamani23@okaxis";
 
 function inr(paise: number) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(paise / 100);
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: paise % 100 === 0 ? 0 : 2, maximumFractionDigits: 2 }).format(paise / 100);
 }
 
 function readableDate(value?: string | null) {
@@ -29,7 +29,8 @@ function readableDate(value?: string | null) {
 export function BillingPage() {
   const owner = useOwnerAccess();
   const [, setLocation] = useLocation();
-  const orderId = new URLSearchParams(window.location.search).get("order") ?? "";
+  const search = useSearch();
+  const orderId = new URLSearchParams(search).get("order") ?? "";
   const catalog = useListBillingPlans();
   const subscription = useGetBillingSubscription({ query: { refetchInterval: orderId ? 10000 : false } });
   const order = useGetBillingOrder(orderId || "00000000-0000-0000-0000-000000000000", {
@@ -46,21 +47,30 @@ export function BillingPage() {
 
   const plans = catalog.data?.plans ?? [];
   const selectedPlan = plans.find((plan) => plan.id === planId);
+  const plusPlan = plans.find((plan) => plan.id === "plus");
+  const launchAmount = plusPlan ? Math.round(plusPlan.monthlyAmount * 30 / 100) : undefined;
   const listedAmount = selectedPlan
     ? (interval === "month" ? selectedPlan.monthlyAmount : selectedPlan.annualAmount)
     : 0;
   const purchaseBusy = createQuote.isPending || checkout.isPending;
 
-  function beginCheckout() {
-    if (!catalog.data?.checkoutEnabled || !selectedPlan) return;
+  function beginCheckout(requestedPlan: PlanId = planId, requestedInterval: Interval = interval, launchOnly = false) {
+    if (!catalog.data?.checkoutEnabled || !plans.some((plan) => plan.id === requestedPlan)) return;
     setError("");
     createQuote.mutate({
-      data: { plan: planId, interval, requestKey: crypto.randomUUID() },
+      data: { plan: requestedPlan, interval: requestedInterval, requestKey: crypto.randomUUID() },
     }, {
-      onSuccess: (quote) => checkout.mutate({ data: { quoteId: quote.id } }, {
+      onSuccess: (quote) => {
+        void subscription.refetch();
+        if (launchOnly && (quote.discountPercent !== 70 || quote.firstTermAmount !== launchAmount)) {
+          setError("The launch offer is not available for this account. No payment request was created. You can choose a standard plan below.");
+          return;
+        }
+        checkout.mutate({ data: { quoteId: quote.id } }, {
         onSuccess: (newOrder) => setLocation(`/billing?order=${encodeURIComponent(newOrder.id)}`),
         onError: () => setError("Could not start the payment request. No payment was taken. Please try again."),
-      }),
+        });
+      },
       onError: () => setError("Could not prepare this plan quote. Please try again."),
     });
   }
@@ -109,6 +119,25 @@ export function BillingPage() {
     {subscription.data?.status === "active" && <div className="billing-active-note" role="status">
       <Check size={17} /> {subscription.data.plan.toUpperCase()} is active until {readableDate(subscription.data.periodEndsAt)}.
     </div>}
+
+    {error && <p className="billing-error" role="alert">{error}</p>}
+
+    {!orderId && plusPlan && launchAmount !== undefined && subscription.data?.launchOffer !== "redeemed" &&
+      <section className="billing-launch-offer" aria-label="Plus launch offer" data-testid="billing-launch-offer">
+        <div>
+          <span className="billing-section-label">PLUS LAUNCH OFFER · 70% OFF</span>
+          <h2>{inr(launchAmount)} <span>for your first month</span></h2>
+          <p>For the first 20 registered users, once per eligible account. Then {inr(plusPlan.monthlyAmount)} per month, renewed manually.</p>
+          <small>{subscription.data?.launchOffer === "eligible"
+            ? "Your account is eligible. The final payment request confirms your discount."
+            : "Eligibility is checked before creating your discounted payment request."}</small>
+        </div>
+        <button type="button" className="button" data-testid="button-plus-launch-offer"
+          disabled={!catalog.data?.checkoutEnabled || purchaseBusy}
+          onClick={() => { setPlanId("plus"); setInterval("month"); beginCheckout("plus", "month", true); }}>
+          {purchaseBusy ? "Checking…" : subscription.data?.launchOffer === "eligible" ? `Continue with ${inr(launchAmount)}` : `Check ${inr(launchAmount)} offer`} <ArrowRight size={16} />
+        </button>
+      </section>}
 
     <section className="billing-plan-grid" aria-label="Available plans">
       {plans.map((plan) => {
@@ -165,7 +194,7 @@ export function BillingPage() {
         <strong>{inr(listedAmount)}</strong>
         <small>Final first-term amount shown in your quote</small>
       </div>
-      <button type="button" className="button billing-start-button" onClick={beginCheckout} disabled={!catalog.data?.checkoutEnabled || purchaseBusy}>
+      <button type="button" className="button billing-start-button" onClick={() => beginCheckout()} disabled={!catalog.data?.checkoutEnabled || purchaseBusy}>
         {purchaseBusy ? "Preparing…" : "Continue to payment"} <ArrowRight size={16} />
       </button>
     </section>
@@ -175,11 +204,9 @@ export function BillingPage() {
       <span>Tax treatment is not configured. Plan usage limits are not yet enforced in the app.</span>
     </div>
 
-    {error && <p className="billing-error" role="alert">{error}</p>}
-
     {orderId && order.isLoading && <div className="billing-order-panel">Loading your payment request…</div>}
     {orderId && order.isError && <div className="billing-order-panel billing-error" role="alert">This payment request could not be loaded. Start a new request or contact DOHAY support.</div>}
-    {order.data && <section className="billing-order-panel" aria-live="polite">
+    {orderId && order.data && <section className="billing-order-panel" aria-live="polite">
       <div className="billing-order-heading">
         <div><span className="billing-section-label">PAYMENT REQUEST</span><h2>{inr(order.data.firstTermAmount)} <span>INR</span></h2></div>
         <span className={`billing-order-status ${order.data.status}`}>{order.data.status.replaceAll("_", " ")}</span>

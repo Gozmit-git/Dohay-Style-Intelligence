@@ -7,7 +7,7 @@ import { ownerFreshness, useClearPrivilegedData } from "../hooks/use-owner";
 import "./billing.css";
 
 function inr(paise: number) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(paise / 100);
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: paise % 100 === 0 ? 0 : 2, maximumFractionDigits: 2 }).format(paise / 100);
 }
 
 export function BillingAdminPage() {

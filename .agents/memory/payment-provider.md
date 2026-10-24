@@ -11,6 +11,12 @@ The user delegated pricing and free-versus-paid feature decisions, with a firm
 requirement that the first 20 users receive 70% off whichever option they choose.
 Do not reinterpret this cohort as the first 20 paying customers without approval.
 
+The user's “₹60 small payment option” means the discounted Plus first month at ₹59.70, not a separate ₹60 payment product.
+
+**Why:** The user explicitly clarified this when the launch offer was missing from the published Plans screen.
+
+**How to apply:** Keep the launch offer discoverable without promising eligibility to every user, and retain paise in displayed payment amounts.
+
 **Why:** The user explicitly said not to use Pine Labs and supplied a GPay QR because this is an MVP.
 
 **How to apply:** Preserve manual verification against actual transfers before granting a paid period. Do not infer success from clicking “paid,” a submitted reference, or a generic agent run. Obtain approval before introducing another gateway.
