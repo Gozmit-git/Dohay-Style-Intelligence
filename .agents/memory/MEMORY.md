@@ -3,3 +3,4 @@
 - [Stable browser verification](browser-verification.md) — freeze hook changes during browser checks; cold-load after hot-reload hook-order errors before diagnosing.
 - [Paid image generation](paid-image-generation.md) — reuse existing outputs on reload; a provider timeout does not prove generation was unbilled.
 - [Payment provider requirement](payment-provider.md) — user replaced Pine Labs with manual GPay QR for the MVP; a QR does not provide automatic renewal or payment verification.
+- [Multi-artifact publishing](multi-artifact-publishing.md) — a secondary video's broken build can block publication of an otherwise working DOHAY app.

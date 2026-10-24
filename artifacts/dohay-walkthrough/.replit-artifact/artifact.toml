@@ -1,4 +1,5 @@
 kind = "video"
+videoAspectRatio = "16:9"
 previewPath = "/dohay-walkthrough/"
 title = "DOHAY Walkthrough"
 description = "A concise animated product walkthrough presenting DOHAY's selfie fit checks, conversational styling, digital wardrobe, visual simulations, plans, and owner tools."
@@ -14,17 +15,6 @@ localPort = 22324
 [services.development]
 run = "pnpm --filter @workspace/dohay-walkthrough run dev"
 
-[services.production]
-build = [ "pnpm", "--filter", "@workspace/dohay-walkthrough", "run", "build" ]
-serve = "static"
-publicDir = "artifacts/dohay-walkthrough/dist/public"
-
-[[services.production.rewrites]]
-from = "/*"
-to = "/index.html"
-
 [services.env]
 PORT = "22324"
 BASE_PATH = "/dohay-walkthrough/"
-
-videoAspectRatio = "16:9"
