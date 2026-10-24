@@ -3,10 +3,9 @@ import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/reac
 import { ClerkProvider, SignIn, SignUp, useClerk, useUser } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
-import { ArrowRight, Bookmark, Camera, CreditCard, MessageCircle, Shirt, Sparkles, UserRound, LogOut, ShieldCheck } from "lucide-react";
+import { ArrowRight, Camera, CreditCard, MessageCircle, Shirt, Sparkles, UserRound, LogOut, ShieldCheck } from "lucide-react";
 import { Link, Route, Switch, useLocation, Router as WouterRouter } from "wouter";
 import { ChatPage } from "./pages/chat-page";
-import { OutfitsPage } from "./pages/outfits-page";
 import { ProfilePage } from "./pages/profile-page";
 import { WardrobePage } from "./pages/wardrobe-page";
 import { BillingPage } from "./pages/billing-page";
@@ -36,7 +35,6 @@ function AppShell({ children, currentPage }: { children: ReactNode; currentPage:
   const navigation = [
     { href: "/", label: "Styling chat", icon: MessageCircle, key: "chat" },
     { href: "/wardrobe", label: "My wardrobe", icon: Shirt, key: "wardrobe" },
-    { href: "/outfits", label: "Outfit boards", icon: Bookmark, key: "outfits" },
     { href: "/profile", label: "Style profile", icon: UserRound, key: "profile" },
     { href: "/billing", label: "Plans", icon: CreditCard, key: "billing" },
     ...(owner.isOwner ? [{ href: "/admin", label: "Owner dashboard", icon: ShieldCheck, key: "admin" }] : []),
@@ -123,7 +121,7 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
-function AuthenticatedRoute({ page }: { page: "chat" | "wardrobe" | "outfits" | "profile" | "billing" | "billing-admin" | "admin" }) {
+function AuthenticatedRoute({ page }: { page: "chat" | "wardrobe" | "profile" | "billing" | "billing-admin" | "admin" }) {
   const { user, isLoaded } = useUser();
   if (!isLoaded) return <main className="auth-loading"><div className="auth-loading-card"><div className="loading-pulse" /><div className="skeleton" /></div></main>;
   if (!user) return <LandingPage />;
@@ -135,9 +133,7 @@ function AuthenticatedRoute({ page }: { page: "chat" | "wardrobe" | "outfits" | 
     ? <ChatPage key={user.id} />
     : page === "wardrobe"
       ? <WardrobePage key={user.id} />
-      : page === "outfits"
-        ? <OutfitsPage key={user.id} />
-        : <ProfilePage key={user.id} />;
+      : <ProfilePage key={user.id} />;
   return <AppShell currentPage={page === "billing-admin" ? "admin" : page}>{content}</AppShell>;
 }
 
@@ -150,7 +146,6 @@ function ClerkAppRoutes() {
       <Route path="/"><AuthenticatedRoute page="chat" /></Route>
       <Route path="/capture"><AuthenticatedRoute page="chat" /></Route>
       <Route path="/wardrobe"><AuthenticatedRoute page="wardrobe" /></Route>
-      <Route path="/outfits"><AuthenticatedRoute page="outfits" /></Route>
       <Route path="/profile"><AuthenticatedRoute page="profile" /></Route>
       <Route path="/admin"><AuthenticatedRoute page="admin" /></Route>
       <Route path="/billing/admin"><AuthenticatedRoute page="billing-admin" /></Route>
