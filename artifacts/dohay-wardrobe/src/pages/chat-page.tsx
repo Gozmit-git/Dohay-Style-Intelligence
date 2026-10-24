@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowUp, Camera, Check, LoaderCircle, MapPin, Plus, ShieldCheck, Sparkles, X } from "lucide-react";
+import { useUser } from "@clerk/react";
+import { ArrowUp, Camera, Check, LoaderCircle, MapPin, Plus, ShieldCheck, Sparkles, Square, Volume2, X } from "lucide-react";
 import type { CreateMvpUploadBodyContentType, MvpContext, MvpMessage, MvpOutfit, MvpProfileInput } from "@workspace/api-client-react";
 import {
   getGetMvpProfileQueryKey,
@@ -24,6 +25,8 @@ import {
 import { OutfitBoard } from "../components/outfit-board";
 import { ScanJobCard } from "../components/scan-job-card";
 import { imageUrl } from "../lib/mvp-utils";
+import { useBrowserVoice } from "../lib/use-browser-voice";
+import { VoiceControls } from "../components/voice-controls";
 
 type PickedPhoto = { id: string; file: File; preview: string };
 type ContextDraft = {
@@ -111,6 +114,7 @@ function getMessagePaths(message: MvpMessage) {
 }
 
 export function ChatPage() {
+  const { user } = useUser();
   const queryClient = useQueryClient();
   const profileQuery = useGetMvpProfile({ query: { queryKey: getGetMvpProfileQueryKey() } });
   const threadsQuery = useListMvpThreads({ query: { queryKey: getListMvpThreadsQueryKey() } });
@@ -124,6 +128,11 @@ export function ChatPage() {
   const profile = profileQuery.data;
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const voice = useBrowserVoice(setText);
+  const voiceRef = useRef(voice);
+  voiceRef.current = voice;
+  useEffect(() => { voice.stopAll(); }, [activeThreadId, voice.stopAll]);
+  useEffect(() => { voice.stopAll(); voice.setAutoSpeak(false); }, [user?.id, voice.stopAll, voice.setAutoSpeak]);
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   const [photoPurpose, setPhotoPurpose] = useState<"fit_check" | "wardrobe">("fit_check");
   const photosRef = useRef(photos);
@@ -284,6 +293,7 @@ export function ChatPage() {
 
   const handleSend = async (overrideText?: string) => {
     if (sending) return;
+    voice.stopListening();
     const content = (overrideText ?? text).trim();
     if (!content && photos.length === 0) return;
     if (photoPurpose === "fit_check" && photos.length > 3) {
@@ -306,6 +316,7 @@ export function ChatPage() {
       const objectPaths = photos.length ? await uploadPhotos() : undefined;
       const finalContent = content || (photoPurpose === "fit_check" ? "How does my outfit look? Give me a quick fit check." : "Please identify these garments for my wardrobe.");
       const reply = await sendMessage.mutateAsync({ threadId, data: { content: finalContent, objectPaths, photoPurpose } });
+      if (voiceRef.current.autoSpeak) voiceRef.current.speak(reply.id, reply.content);
       const messageKey = getListMvpMessagesQueryKey(threadId);
       setActiveThreadId(threadId);
       // Show the confirmed server reply immediately, even if a background
@@ -445,7 +456,14 @@ export function ChatPage() {
                 <article className={`conversation-message ${message.role}`}>
                   {message.role === "assistant" && <span className="message-mark">D</span>}
                   <div className="message-content">
-                    <div className="message-meta">{message.role === "assistant" ? "DOHAY" : "You"} · {new Date(message.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div>
+                    <div className="message-meta">{message.role === "assistant" ? "DOHAY" : "You"} · {new Date(message.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                      {message.role === "assistant" && voice.canSpeak && <button type="button" className="voice-reply-button"
+                        aria-label={voice.speakingId === message.id ? "Stop reading reply" : "Listen to reply"}
+                        onClick={() => voice.speakingId === message.id ? voice.stopSpeaking() : voice.speak(message.id, message.content)}>
+                        {voice.speakingId === message.id ? <Square size={12} /> : <Volume2 size={12} />}
+                        {voice.speakingId === message.id ? "Stop" : "Listen"}
+                      </button>}
+                    </div>
                     {message.content}
                     {paths.length > 0 && <div className="message-images">{paths.map((path, index) => <img key={`${path}-${index}`} src={imageUrl(path)} alt={`Attached wardrobe photo ${index + 1}`} loading="lazy" />)}</div>}
                   </div>
@@ -508,13 +526,14 @@ export function ChatPage() {
         </div>}
         {sendError && <div className="chat-error">{sendError}<button type="button" className="text-retry" onClick={() => setSendError("")}>Dismiss</button></div>}
         <div className="composer">
+          <VoiceControls voice={voice} draft={text} disabled={isBusy} />
           <div className="suggestion-row" aria-label="Photo purpose" style={{ padding: "12px 14px 0" }}>
             <button type="button" className={`button button-small ${photoPurpose === "fit_check" ? "" : "button-quiet"}`} aria-pressed={photoPurpose === "fit_check"} disabled={isBusy} onClick={() => setPhotoPurpose("fit_check")}>Quick fit check</button>
             <button type="button" className={`button button-small ${photoPurpose === "wardrobe" ? "" : "button-quiet"}`} aria-pressed={photoPurpose === "wardrobe"} disabled={isBusy} onClick={() => setPhotoPurpose("wardrobe")}>Add to wardrobe</button>
           </div>
           <p className="private-note">{photoPurpose === "fit_check" ? "Show your whole outfit if possible. Your face is optional. The review stays in this private chat; it won’t add wardrobe items." : "Identify individual pieces, then review and confirm before saving."}</p>
           {photos.length > 0 && <div className="attachment-tray">{photos.map((photo) => <div className="attachment-thumb" key={photo.id}><img src={photo.preview} alt={photo.file.name} /><button type="button" className="attachment-remove" aria-label={`Remove ${photo.file.name}`} onClick={() => removePhoto(photo.id)}><X size={12} /></button></div>)}</div>}
-          <textarea value={text} maxLength={4000} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void handleSend(); } }} placeholder="Tell me what you’re deciding…" aria-label="Message DOHAY" />
+          <textarea value={text} maxLength={4000} onChange={(event) => { if (voice.listening) voice.stopListening(); setText(event.target.value); }} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void handleSend(); } }} placeholder="Type or dictate what you’re deciding…" aria-label="Message DOHAY" />
           <div className="composer-toolbar">
             <div className="composer-tools">
               {photoPurpose === "fit_check" && <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => selfiePicker.current?.click()}><Camera size={15} /><span>Take outfit selfie</span></button>}

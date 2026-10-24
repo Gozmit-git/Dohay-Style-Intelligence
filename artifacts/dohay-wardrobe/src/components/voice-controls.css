@@ -1,0 +1,12 @@
+.voice-panel { padding: 12px 14px 0; }
+.voice-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.voice-auto { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; cursor: pointer; }
+.voice-auto input { accent-color: #3d6255; }
+.voice-note { margin: 8px 0; font-size: 11px; line-height: 1.5; color: #657168; }
+.voice-settings { font-size: 12px; }
+.voice-settings summary { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.voice-settings-fields { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 0; }
+.voice-settings-fields label { display: flex; flex-direction: column; gap: 5px; font-size: 11px; }
+.voice-settings-fields select { width: min(230px, 100%); max-width: 100%; border: 1px solid #dcd8cc; border-radius: 8px; padding: 7px; background: #faf8f2; color: #304a40; }
+.voice-reply-button { display: inline-flex; align-items: center; gap: 5px; margin-left: 10px; border: 0; background: transparent; color: #3d6255; font: inherit; cursor: pointer; padding: 4px; }
+.voice-reply-button:focus-visible, .voice-settings summary:focus-visible { outline: 2px solid #3d6255; outline-offset: 3px; border-radius: 3px; }

@@ -46,6 +46,7 @@ A private, chatbot-first personal styling app. DOHAY chat is the main interface;
 
 - Chat with persistent conversation history.
 - A core action is taking an outfit selfie for a quick fit-check review of how the outfit looks. Review styling and visible garment fit, not the person's body. Fit-check photos stay in private chat and never auto-create wardrobe records; wardrobe capture is a separate explicit mode.
+- Voice currently uses browser dictation and speech synthesis, as explicitly chosen by the user without connecting ElevenLabs. Label it browser-powered, make microphone activation and auto-read opt-in, and keep text chat available when unsupported.
 - Explicit image consent before JPEG, PNG, or WebP uploads; up to ten photos per batch, each at most 10 MB.
 - Background photo detection, editable individual-item drafts, and explicit confirmation before wardrobe saves.
 - Manage availability, edit garments, remove private assets, and use saved outfit boards.
