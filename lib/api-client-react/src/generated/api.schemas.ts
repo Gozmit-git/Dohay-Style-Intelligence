@@ -346,6 +346,60 @@ export interface MvpThread {
   updatedAt: string;
 }
 
+export type MvpStylingContextDressCode = typeof MvpStylingContextDressCode[keyof typeof MvpStylingContextDressCode];
+
+
+export const MvpStylingContextDressCode = {
+  casual: 'casual',
+  smart_casual: 'smart_casual',
+  business: 'business',
+  formal: 'formal',
+} as const;
+
+/**
+ * Optional user-confirmed details for chat and fit checks. Coordinates are used transiently for weather and never included in chat history.
+ */
+export interface MvpStylingContext {
+  /** @maxLength 180 */
+  occasion?: string;
+  dressCode?: MvpStylingContextDressCode;
+  /** @maxLength 300 */
+  activities?: string;
+  /**
+     * @maxItems 10
+     * @items.maxLength 80
+     */
+  exclusions?: string[];
+  outdoor?: boolean;
+  /**
+     * @minimum -70
+     * @maximum 65
+     * @nullable
+     */
+  temperature?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 500
+     * @nullable
+     */
+  precipitation?: number | null;
+  /** @maxLength 120 */
+  weatherLabel?: string;
+  useWeather?: boolean;
+  /**
+     * @minimum -90
+     * @maximum 90
+     * @nullable
+     */
+  latitude?: number | null;
+  /**
+     * @minimum -180
+     * @maximum 180
+     * @nullable
+     */
+  longitude?: number | null;
+}
+
 export type MvpContextDressCode = typeof MvpContextDressCode[keyof typeof MvpContextDressCode];
 
 
@@ -550,6 +604,7 @@ export type SendMvpMessageBody = {
   objectPaths?: string[];
   /** Review the outfit being worn, or explicitly scan clothing into wardrobe drafts. */
   photoPurpose?: SendMvpMessageBodyPhotoPurpose;
+  stylingContext?: MvpStylingContext;
 };
 
 export type RecommendMvpOutfitsBody = {

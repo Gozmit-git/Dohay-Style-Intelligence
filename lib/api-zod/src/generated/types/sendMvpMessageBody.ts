@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { MvpStylingContext } from './mvpStylingContext';
 import type { SendMvpMessageBodyPhotoPurpose } from './sendMvpMessageBodyPhotoPurpose';
 
 export type SendMvpMessageBody = {
@@ -14,4 +15,5 @@ export type SendMvpMessageBody = {
   objectPaths?: string[];
   /** Review the outfit being worn, or explicitly scan clothing into wardrobe drafts. */
   photoPurpose?: SendMvpMessageBodyPhotoPurpose;
+  stylingContext?: MvpStylingContext;
 };

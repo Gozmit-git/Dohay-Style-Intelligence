@@ -813,11 +813,47 @@ export const sendMvpMessageBodyContentMax = 4000;
 export const sendMvpMessageBodyObjectPathsMax = 10;
 
 export const sendMvpMessageBodyPhotoPurposeDefault = `fit_check`;
+export const sendMvpMessageBodyStylingContextOccasionMax = 180;
+
+export const sendMvpMessageBodyStylingContextActivitiesMax = 300;
+
+export const sendMvpMessageBodyStylingContextExclusionsItemMax = 80;
+
+export const sendMvpMessageBodyStylingContextExclusionsMax = 10;
+
+export const sendMvpMessageBodyStylingContextTemperatureMin = -70;
+export const sendMvpMessageBodyStylingContextTemperatureMax = 65;
+
+export const sendMvpMessageBodyStylingContextPrecipitationMin = 0;
+export const sendMvpMessageBodyStylingContextPrecipitationMax = 500;
+
+export const sendMvpMessageBodyStylingContextWeatherLabelMax = 120;
+
+export const sendMvpMessageBodyStylingContextLatitudeMin = -90;
+export const sendMvpMessageBodyStylingContextLatitudeMax = 90;
+
+export const sendMvpMessageBodyStylingContextLongitudeMin = -180;
+export const sendMvpMessageBodyStylingContextLongitudeMax = 180;
+
+
 
 export const SendMvpMessageBody = zod.object({
   "content": zod.string().max(sendMvpMessageBodyContentMax),
   "objectPaths": zod.array(zod.string()).max(sendMvpMessageBodyObjectPathsMax).optional(),
-  "photoPurpose": zod.enum(['fit_check', 'wardrobe']).default(sendMvpMessageBodyPhotoPurposeDefault).describe('Review the outfit being worn, or explicitly scan clothing into wardrobe drafts.')
+  "photoPurpose": zod.enum(['fit_check', 'wardrobe']).default(sendMvpMessageBodyPhotoPurposeDefault).describe('Review the outfit being worn, or explicitly scan clothing into wardrobe drafts.'),
+  "stylingContext": zod.object({
+  "occasion": zod.string().max(sendMvpMessageBodyStylingContextOccasionMax).optional(),
+  "dressCode": zod.enum(['casual', 'smart_casual', 'business', 'formal']).optional(),
+  "activities": zod.string().max(sendMvpMessageBodyStylingContextActivitiesMax).optional(),
+  "exclusions": zod.array(zod.string().max(sendMvpMessageBodyStylingContextExclusionsItemMax)).max(sendMvpMessageBodyStylingContextExclusionsMax).optional(),
+  "outdoor": zod.boolean().optional(),
+  "temperature": zod.number().min(sendMvpMessageBodyStylingContextTemperatureMin).max(sendMvpMessageBodyStylingContextTemperatureMax).nullish(),
+  "precipitation": zod.number().min(sendMvpMessageBodyStylingContextPrecipitationMin).max(sendMvpMessageBodyStylingContextPrecipitationMax).nullish(),
+  "weatherLabel": zod.string().max(sendMvpMessageBodyStylingContextWeatherLabelMax).optional(),
+  "useWeather": zod.boolean().optional(),
+  "latitude": zod.number().min(sendMvpMessageBodyStylingContextLatitudeMin).max(sendMvpMessageBodyStylingContextLatitudeMax).nullish(),
+  "longitude": zod.number().min(sendMvpMessageBodyStylingContextLongitudeMin).max(sendMvpMessageBodyStylingContextLongitudeMax).nullish()
+}).optional().describe('Optional user-confirmed details for chat and fit checks. Coordinates are used transiently for weather and never included in chat history.')
 })
 
 export const sendMvpMessageResponseSuggestedContextOneOccasionMax = 180;

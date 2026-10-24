@@ -40,6 +40,8 @@ export * from './mvpProfileInput';
 export * from './mvpScoreBreakdown';
 export * from './mvpSource';
 export * from './mvpSourceSource';
+export * from './mvpStylingContext';
+export * from './mvpStylingContextDressCode';
 export * from './mvpThread';
 export * from './outfit';
 export * from './outfitRequest';

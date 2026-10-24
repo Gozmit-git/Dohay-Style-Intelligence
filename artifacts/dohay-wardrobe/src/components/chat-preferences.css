@@ -1,0 +1,8 @@
+.chat-preferences { border-top: 1px solid hsl(var(--border)); padding: 14px 0; }
+.chat-preferences summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.chat-preferences p { font-size: 12px; line-height: 1.5; margin: 10px 0; }
+.chat-preferences fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.chat-context-applied { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; padding: 8px 14px; background: #edf2eb; }
+.chat-context-applied button { font-size: inherit; }
+.chat-page .composer-shell { max-height: 60dvh; overflow-y: auto; }
+.chat-page .context-dock { max-height: 42dvh; overflow-y: auto; }

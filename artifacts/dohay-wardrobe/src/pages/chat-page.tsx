@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/react";
 import { ArrowUp, Camera, Check, LoaderCircle, MapPin, Plus, ShieldCheck, Sparkles, Square, Volume2, X } from "lucide-react";
-import type { CreateMvpUploadBodyContentType, MvpContext, MvpMessage, MvpOutfit, MvpProfileInput } from "@workspace/api-client-react";
+import type { CreateMvpUploadBodyContentType, MvpContext, MvpMessage, MvpOutfit, MvpProfileInput, MvpStylingContext } from "@workspace/api-client-react";
 import {
   getGetMvpProfileQueryKey,
   getListMvpMessagesQueryKey,
@@ -27,6 +27,8 @@ import { ScanJobCard } from "../components/scan-job-card";
 import { imageUrl } from "../lib/mvp-utils";
 import { useBrowserVoice } from "../lib/use-browser-voice";
 import { VoiceControls } from "../components/voice-controls";
+import { ChatPreferences } from "../components/chat-preferences";
+import "../components/chat-preferences.css";
 
 type PickedPhoto = { id: string; file: File; preview: string };
 type ContextDraft = {
@@ -142,6 +144,19 @@ export function ChatPage() {
   const [showContext, setShowContext] = useState(false);
   const [context, setContext] = useState<ContextDraft>(initialContext);
   const [contextConfirmed, setContextConfirmed] = useState(false);
+  const [contextApplied, setContextApplied] = useState(false);
+  const locationRequest = useRef(0);
+  const contextDock = useRef<HTMLElement>(null);
+  useEffect(() => {
+    locationRequest.current++;
+    setContext(initialContext);
+    setContextApplied(false);
+    setContextConfirmed(false);
+    setWeatherError("");
+    setContextError("");
+  }, [user?.id]);
+  useEffect(() => { if (showContext) contextDock.current?.scrollIntoView({ block: "nearest" }); }, [showContext]);
+  useEffect(() => () => { locationRequest.current++; }, []);
   const [contextError, setContextError] = useState("");
   const [recommendation, setRecommendation] = useState<{ outfits: MvpOutfit[]; warnings: string[]; context: MvpContext } | null>(null);
   const [recommendError, setRecommendError] = useState("");
@@ -169,9 +184,11 @@ export function ChatPage() {
       const hadPreviousThread = previousThread.current !== null;
       previousThread.current = activeThreadId;
       if (hadPreviousThread && activeThreadId) {
+        locationRequest.current++;
         setRecommendation(null);
         setContext(initialContext);
         setContextConfirmed(false);
+        setContextApplied(false);
         setShowContext(false);
       }
     }
@@ -189,15 +206,17 @@ export function ChatPage() {
     profilePrefilledThread.current = activeThreadId;
     setContext((current) => ({ ...current, dressCode: defaultDressCode as MvpContext["dressCode"] }));
     setContextConfirmed(false);
+    setContextApplied(false);
   }, [profile?.defaultDressCode, activeThreadId, context.dressCode, latestSuggestion]);
   const appliedSuggestionId = useRef<string | null>(null);
   useEffect(() => {
     if (!latestSuggestion?.suggestedContext || appliedSuggestionId.current === latestSuggestion.id) return;
     appliedSuggestionId.current = latestSuggestion.id;
+    if (contextApplied) return;
     setContext(suggestedContext(latestSuggestion.suggestedContext));
     setContextConfirmed(false);
     setShowContext(true);
-  }, [latestSuggestion]);
+  }, [latestSuggestion, contextApplied]);
 
   useEffect(() => {
     const element = conversationEnd.current;
@@ -220,6 +239,13 @@ export function ChatPage() {
     setSendError("");
     try {
       const id = await createConversation();
+      locationRequest.current++;
+      setContextApplied(false);
+      setContext(initialContext);
+      setContextConfirmed(false);
+      setShowContext(false);
+      setWeatherError("");
+      setContextError("");
       setActiveThreadId(id);
     } catch {
       setSendError("A new conversation could not be started. Please try again.");
@@ -315,7 +341,17 @@ export function ChatPage() {
       if (!threadId) threadId = await createConversation(content);
       const objectPaths = photos.length ? await uploadPhotos() : undefined;
       const finalContent = content || (photoPurpose === "fit_check" ? "How does my outfit look? Give me a quick fit check." : "Please identify these garments for my wardrobe.");
-      const reply = await sendMessage.mutateAsync({ threadId, data: { content: finalContent, objectPaths, photoPurpose } });
+      const stylingContext: MvpStylingContext | undefined = contextApplied ? {
+        occasion: context.occasion.trim() || undefined, dressCode: context.dressCode || undefined,
+        activities: context.activities.trim() || undefined,
+        exclusions: context.exclusions.split(",").map((value) => value.trim()).filter(Boolean),
+        outdoor: context.outdoor, temperature: context.temperature === "" ? null : Number(context.temperature),
+        precipitation: context.precipitation === "" ? null : Number(context.precipitation),
+        weatherLabel: context.weatherLabel.trim() || undefined,
+        useWeather: context.useWeather, latitude: context.useWeather ? context.latitude : null,
+        longitude: context.useWeather ? context.longitude : null,
+      } : undefined;
+      const reply = await sendMessage.mutateAsync({ threadId, data: { content: finalContent, objectPaths, photoPurpose, stylingContext } });
       if (voiceRef.current.autoSpeak) voiceRef.current.speak(reply.id, reply.content);
       const messageKey = getListMvpMessagesQueryKey(threadId);
       setActiveThreadId(threadId);
@@ -347,9 +383,23 @@ export function ChatPage() {
   const updateContext = <K extends keyof ContextDraft>(key: K, value: ContextDraft[K]) => {
     setContext((current) => ({ ...current, [key]: value }));
     setContextConfirmed(false);
+    setContextApplied(false);
+  };
+
+  const validateDetails = () => {
+    const temperature = Number(context.temperature), rain = Number(context.precipitation);
+    const exclusions = context.exclusions.split(",").map((value) => value.trim()).filter(Boolean);
+    let error = "";
+    if (context.temperature !== "" && (!Number.isFinite(temperature) || temperature < -70 || temperature > 65)) error = "Temperature must be between −70 and 65 °C.";
+    else if (context.precipitation !== "" && (!Number.isFinite(rain) || rain < 0 || rain > 500)) error = "Precipitation must be between 0 and 500 mm.";
+    else if (exclusions.length > 10 || exclusions.some((value) => value.length > 80)) error = "Use up to ten exclusions, each under 80 characters.";
+    else if (context.useWeather && (context.latitude == null || context.longitude == null)) error = "Wait for location access, or turn it off and enter weather manually.";
+    setContextError(error);
+    return !error;
   };
 
   const confirmContext = () => {
+    if (!validateDetails()) return;
     if (!context.occasion.trim() || !context.dressCode) {
       setContextError("Add an occasion and choose a dress code before continuing.");
       setContextConfirmed(false);
@@ -360,7 +410,9 @@ export function ChatPage() {
   };
 
   const locateForWeather = (checked: boolean) => {
+    const request = ++locationRequest.current;
     setWeatherError("");
+    updateContext("useWeather", checked);
     if (!checked) {
       updateContext("useWeather", false);
       updateContext("latitude", null);
@@ -368,15 +420,21 @@ export function ChatPage() {
       return;
     }
     if (!navigator.geolocation) {
+      updateContext("useWeather", false);
       setWeatherError("Location is unavailable in this browser. Add weather manually instead.");
       return;
     }
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
+        if (locationRequest.current !== request) return;
         setContext((current) => ({ ...current, latitude: coords.latitude, longitude: coords.longitude, useWeather: true }));
         setContextConfirmed(false);
+        setContextApplied(false);
       },
       () => {
+        if (locationRequest.current !== request) return;
+        setContext((current) => ({ ...current, useWeather: false, latitude: null, longitude: null }));
+        setContextApplied(false);
         setWeatherError("Location was not shared. You can continue with the manual weather fields.");
       },
       { enableHighAccuracy: false, timeout: 9000, maximumAge: 600000 },
@@ -428,7 +486,7 @@ export function ChatPage() {
             {threads.map((thread) => <option value={thread.id} key={thread.id}>{thread.title || "Styling conversation"}</option>)}
           </select>}
           <button className="button button-quiet button-small" type="button" onClick={beginNewConversation} disabled={createThread.isPending}><Plus size={13} /> New chat</button>
-          <button className={`button button-small ${showContext ? "button-soft" : ""}`} type="button" onClick={() => setShowContext((current) => !current)}><Sparkles size={13} /> Plan an outfit</button>
+          <button className={`button button-small ${showContext ? "button-soft" : ""}`} type="button" onClick={() => setShowContext((current) => !current)}><Sparkles size={13} /> Styling details</button>
         </div>
       </header>
       <div className="conversation-scroll">
@@ -495,22 +553,27 @@ export function ChatPage() {
         </div>
       </div>
       <div className="composer-shell">
-        {showContext && <section className="context-dock">
-          <div className="context-dock-header"><div><span className="eyebrow">One useful detail</span><h2>What are we dressing for?</h2></div><button type="button" className="icon-button" aria-label="Close outfit planning" onClick={() => setShowContext(false)}><X size={15} /></button></div>
-          <p className="context-intro">Give me the occasion and dress code. I’ll only suggest combinations from pieces you’ve confirmed in your wardrobe.</p>
+        {showContext && <section className="context-dock" ref={contextDock}>
+          <div className="context-dock-header"><div><span className="eyebrow">Optional for chat and selfie reviews</span><h2>What are we dressing for?</h2></div><button type="button" className="icon-button" aria-label="Close styling details" onClick={() => setShowContext(false)}><X size={15} /></button></div>
+          <p className="context-intro">Share only what helps, then use these details in chat. For wardrobe outfit boards, occasion and dress code must still be confirmed.</p>
+          <ChatPreferences key={user?.id} profile={profile} disabled={sending || uploadConsentBusy} />
           <div className="context-grid">
-            <div className="field"><label htmlFor="context-occasion">Occasion</label><input id="context-occasion" value={context.occasion} onChange={(event) => updateContext("occasion", event.target.value)} placeholder="Dinner with friends" /></div>
+            <div className="field"><label htmlFor="context-occasion">Occasion</label><input id="context-occasion" maxLength={180} value={context.occasion} onChange={(event) => updateContext("occasion", event.target.value)} placeholder="Dinner with friends" /></div>
             <div className="field"><label htmlFor="context-dresscode">Dress code</label><select id="context-dresscode" value={context.dressCode} onChange={(event) => updateContext("dressCode", event.target.value as ContextDraft["dressCode"])}><option value="">Choose one…</option><option value="casual">Casual</option><option value="smart_casual">Smart casual</option><option value="business">Business</option><option value="formal">Formal</option></select></div>
-            <div className="field"><label htmlFor="context-activities">What will you be doing?</label><input id="context-activities" value={context.activities} onChange={(event) => updateContext("activities", event.target.value)} placeholder="Walking, sitting outside…" /></div>
+            <div className="field"><label htmlFor="context-activities">What will you be doing?</label><input id="context-activities" maxLength={300} value={context.activities} onChange={(event) => updateContext("activities", event.target.value)} placeholder="Walking, sitting outside…" /></div>
             <div className="field"><label htmlFor="context-exclusions">Anything to leave out?</label><input id="context-exclusions" value={context.exclusions} onChange={(event) => updateContext("exclusions", event.target.value)} placeholder="Heels, wool, a color…" /></div>
             <label className="weather-row context-wide"><input type="checkbox" checked={context.outdoor} onChange={(event) => updateContext("outdoor", event.target.checked)} /><span>Some of this will be outdoors</span></label>
-            <div className="field"><label htmlFor="context-temperature">Temperature °C</label><input id="context-temperature" type="number" value={context.temperature} onChange={(event) => updateContext("temperature", event.target.value)} placeholder="Optional" /></div>
+            <div className="field"><label htmlFor="context-temperature">Temperature °C</label><input id="context-temperature" type="number" min="-70" max="65" value={context.temperature} onChange={(event) => updateContext("temperature", event.target.value)} placeholder="Optional" /></div>
             <div className="field"><label htmlFor="context-precip">Precipitation mm</label><input id="context-precip" type="number" min="0" max="500" value={context.precipitation} onChange={(event) => updateContext("precipitation", event.target.value)} placeholder="Optional" /></div>
-            <div className="field context-wide"><label htmlFor="context-weather-label">Weather note</label><input id="context-weather-label" value={context.weatherLabel} onChange={(event) => updateContext("weatherLabel", event.target.value)} placeholder="Light rain, breezy, clear…" /></div>
+            <div className="field context-wide"><label htmlFor="context-weather-label">Weather note</label><input id="context-weather-label" maxLength={120} value={context.weatherLabel} onChange={(event) => updateContext("weatherLabel", event.target.value)} placeholder="Light rain, breezy, clear…" /></div>
             <label className="weather-row context-wide"><input type="checkbox" checked={context.useWeather} onChange={(event) => locateForWeather(event.target.checked)} /><span><strong><MapPin size={12} /> Use my location for weather</strong><br />Your location is only used when you opt in. You can also enter weather yourself above.</span></label>
           </div>
           {weatherError && <div className="context-inline-error">{weatherError}</div>}
           {contextError && <div className="context-inline-error">{contextError}</div>}
+          <div className="context-confirm-row">
+            <button type="button" className="button button-small" disabled={sending} onClick={() => { if (validateDetails()) { setContextApplied(true); setShowContext(false); } }}>Use details in chat</button>
+            <button type="button" className="text-button" onClick={() => { locationRequest.current++; setContext(initialContext); setContextApplied(false); setContextConfirmed(false); setContextError(""); setWeatherError(""); }}>Clear request details</button>
+          </div>
           <div className="context-confirm-row">
             {contextConfirmed && <span className="context-confirmed"><Check size={13} /> Occasion and dress code confirmed</span>}
             {!contextConfirmed
@@ -518,6 +581,11 @@ export function ChatPage() {
               : <button type="button" className="button button-small" disabled={recommend.isPending} onClick={getOutfits}>{recommend.isPending ? <LoaderCircle className="spin" size={13} /> : <Sparkles size={13} />} Make outfit ideas</button>}
           </div>
         </section>}
+        {contextApplied && <div className="chat-context-applied" role="status">
+          <Check size={13} /><span>Styling details on{context.occasion ? ` · ${context.occasion}` : ""}{context.temperature !== "" ? ` · ${context.temperature} °C` : ""}. Used in chat and fit checks, not wardrobe scans.</span>
+          <button type="button" className="text-button" onClick={() => setShowContext(true)}>Edit</button>
+          <button type="button" className="text-button" onClick={() => { locationRequest.current++; setContextApplied(false); setContext(initialContext); setContextConfirmed(false); }}>Remove details</button>
+        </div>}
         {!hasImageConsent && <div className="privacy-gate">
           <div className="privacy-gate-copy"><strong><ShieldCheck size={14} /> Photos need your permission first.</strong>Text chat is ready now. Before any photo is uploaded, choose to allow DOHAY to process wardrobe images. You can change this in Profile.</div>
           {consentError && <div className="context-inline-error">{consentError}</div>}

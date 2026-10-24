@@ -9,6 +9,8 @@ import {
 } from "../lib/mvpData";
 import { createScanJob } from "../lib/mvpJobs";
 import { postToAiService } from "../lib/wardrobeAi";
+import { weatherContext } from "../lib/outfitEngine";
+import { formatStylingContext } from "../lib/stylingContext";
 
 const router = Router();
 router.get("/profile", handler(async (_req, res, userId) => {
@@ -60,8 +62,15 @@ router.post("/threads/:threadId/messages", handler(async (req, res, userId) => {
   if (isFitCheck && paths.length > 3) throw new MvpError(400, "Use up to three outfit photos for a quick fit check.");
   if (!data.content.trim() && !paths.length) throw new MvpError(400, "Type a message or attach a clothing photo.");
   if (paths.length) { await consentFor(userId); await uploadsFor(userId, paths); }
+  let content = data.content.trim() || (isFitCheck ? "How does my outfit look? Give me a quick fit check." : "Help me add these clothes to my wardrobe.");
+  let currentContext = "";
+  if (data.stylingContext && (!paths.length || isFitCheck)) {
+    const resolved = await weatherContext(data.stylingContext);
+    currentContext = formatStylingContext(resolved.context, resolved.warnings);
+    if (currentContext) content += `\n\n${currentContext}`;
+  }
   await addMessage(userId, threadId, "user",
-    data.content.trim() || (isFitCheck ? "How does my outfit look? Give me a quick fit check." : "Help me add these clothes to my wardrobe."),
+    content,
     paths, { intent: paths.length && !isFitCheck ? "add_wardrobe" : "chat" });
   if (thread.title === "New conversation") await db.update(mvpThreads).set({
     title: (data.content.trim() || (isFitCheck ? "Quick outfit fit check" : "Adding clothes to my wardrobe")).slice(0, 80),
@@ -69,7 +78,7 @@ router.post("/threads/:threadId/messages", handler(async (req, res, userId) => {
   if (paths.length && isFitCheck) {
     try {
       const result = await postToAiService<{ reply: string }>("/fit-check", {
-        images: await imageDataFor(userId, paths), message: data.content.trim(),
+        images: await imageDataFor(userId, paths), message: content,
         profile: await profileFor(userId),
       });
       const message = await addMessage(userId, threadId, "assistant", result.reply);
@@ -95,8 +104,8 @@ router.post("/threads/:threadId/messages", handler(async (req, res, userId) => {
       reply: string; intent: "chat" | "recommend" | "add_wardrobe";
       suggestedContext: { occasion: string | null; dressCode: string | null; exclusions: string[]; activities: string; outdoor: boolean } | null;
     }>("/assistant", {
-      messages: history.slice(-30).map((m) => ({ role: m.role, content: m.content.slice(0, 4000) })),
-      profile, wardrobe: await itemsFor(userId),
+      messages: history.slice(-30).map((m) => ({ role: m.role, content: m.content.slice(0, 6000) })),
+      profile, wardrobe: await itemsFor(userId), currentContext,
       images: profile.imageConsent && recentOutfitPhoto ? await imageDataFor(userId, recentOutfitPhoto.attachments.slice(0, 3)) : [],
     });
     const suggestedContext = result.suggestedContext?.occasion && result.suggestedContext?.dressCode

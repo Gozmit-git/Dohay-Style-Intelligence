@@ -131,8 +131,8 @@ export function generateOutfits(items: MvpItem[], context: MvpContext, profile: 
   }
   return selected;
 }
-export async function weatherContext(input: MvpContext): Promise<{ context: MvpContext; warnings: string[] }> {
-  const context: MvpContext = { exclusions: [], activities: "", outdoor: false, temperature: null, precipitation: null, weatherLabel: null, useWeather: false, ...input };
+export async function weatherContext<T extends Partial<MvpContext>>(input: T): Promise<{ context: T & Partial<MvpContext>; warnings: string[] }> {
+  const context = { exclusions: [], activities: "", outdoor: false, temperature: null as number | null, precipitation: null as number | null, weatherLabel: null as string | null, useWeather: false, ...input };
   const warnings: string[] = [];
   if (context.useWeather && context.latitude != null && context.longitude != null) {
     try {
@@ -150,7 +150,9 @@ export async function weatherContext(input: MvpContext): Promise<{ context: MvpC
       context.weatherLabel = "Today's local forecast · Open-Meteo";
     } catch {
       warnings.push("Weather could not be retrieved. Your manual conditions are used; you can change them and try again.");
-      context.weatherLabel = context.temperature == null ? "Weather unavailable" : "Manual weather";
+      context.weatherLabel = context.weatherLabel
+        ? `${context.weatherLabel} (forecast unavailable; manual conditions)`
+        : context.temperature == null ? "Weather unavailable" : "Manual weather";
     }
   } else if (context.useWeather) {
     warnings.push("Location was not provided. Enter temperature and rain manually instead.");

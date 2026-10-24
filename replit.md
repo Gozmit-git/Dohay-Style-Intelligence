@@ -50,7 +50,8 @@ A private, chatbot-first personal styling app. DOHAY chat is the main interface;
 - Explicit image consent before JPEG, PNG, or WebP uploads; up to ten photos per batch, each at most 10 MB.
 - Background photo detection, editable individual-item drafts, and explicit confirmation before wardrobe saves.
 - Manage availability, edit garments, remove private assets, and use saved outfit boards.
-- Confirm occasion and dress code; use opt-in Open-Meteo weather or manual temperature/rain.
+- Chat exposes saved style, palette, comfort restrictions, and default workplace dress code, plus per-request occasion, dress code, activities, exclusions, and weather. These remain optional for quick chat and selfie reviews, as agreed with the user; only wardrobe outfit boards require confirmed occasion and dress code.
+- Apply request details explicitly before using them in chat. Saved preferences persist across conversations; request details reset for a new conversation. Use opt-in Open-Meteo weather or manual temperature/rain, and never retain precise coordinates in chat history.
 - Initial normalized outfit weights: occasion/dress 30%, compatibility 25%, weather 20%, style 15%, layering/variety 10%.
 - Detect repeated copies of the same primary photo and require a separate confirmation to save another copy.
 
