@@ -3,12 +3,14 @@ import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/reac
 import { ClerkProvider, SignIn, SignUp, useClerk, useUser } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
-import { ArrowRight, Bookmark, Camera, MessageCircle, Shirt, Sparkles, UserRound, LogOut } from "lucide-react";
+import { ArrowRight, Bookmark, Camera, CreditCard, MessageCircle, Shirt, Sparkles, UserRound, LogOut } from "lucide-react";
 import { Link, Route, Switch, useLocation, Router as WouterRouter } from "wouter";
 import { ChatPage } from "./pages/chat-page";
 import { OutfitsPage } from "./pages/outfits-page";
 import { ProfilePage } from "./pages/profile-page";
 import { WardrobePage } from "./pages/wardrobe-page";
+import { BillingPage } from "./pages/billing-page";
+import { BillingAdminPage } from "./pages/billing-admin-page";
 
 const queryClient = new QueryClient();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -33,6 +35,7 @@ function AppShell({ children, currentPage }: { children: ReactNode; currentPage:
     { href: "/wardrobe", label: "My wardrobe", icon: Shirt, key: "wardrobe" },
     { href: "/outfits", label: "Outfit boards", icon: Bookmark, key: "outfits" },
     { href: "/profile", label: "Style profile", icon: UserRound, key: "profile" },
+    { href: "/billing", label: "Plans", icon: CreditCard, key: "billing" },
   ];
   return <div className="app-frame">
     <aside className="side-rail">
@@ -116,18 +119,22 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
-function AuthenticatedRoute({ page }: { page: "chat" | "wardrobe" | "outfits" | "profile" }) {
+function AuthenticatedRoute({ page }: { page: "chat" | "wardrobe" | "outfits" | "profile" | "billing" | "billing-admin" }) {
   const { user, isLoaded } = useUser();
   if (!isLoaded) return <main className="auth-loading"><div className="auth-loading-card"><div className="loading-pulse" /><div className="skeleton" /></div></main>;
   if (!user) return <LandingPage />;
-  const content = page === "chat"
+  const content = page === "billing-admin"
+    ? <BillingAdminPage key={user.id} />
+    : page === "billing"
+      ? <BillingPage key={user.id} />
+      : page === "chat"
     ? <ChatPage key={user.id} />
     : page === "wardrobe"
       ? <WardrobePage key={user.id} />
       : page === "outfits"
         ? <OutfitsPage key={user.id} />
         : <ProfilePage key={user.id} />;
-  return <AppShell currentPage={page}>{content}</AppShell>;
+  return <AppShell currentPage={page === "billing-admin" ? "billing" : page}>{content}</AppShell>;
 }
 
 function ClerkAppRoutes() {
@@ -141,6 +148,8 @@ function ClerkAppRoutes() {
       <Route path="/wardrobe"><AuthenticatedRoute page="wardrobe" /></Route>
       <Route path="/outfits"><AuthenticatedRoute page="outfits" /></Route>
       <Route path="/profile"><AuthenticatedRoute page="profile" /></Route>
+      <Route path="/billing/admin"><AuthenticatedRoute page="billing-admin" /></Route>
+      <Route path="/billing"><AuthenticatedRoute page="billing" /></Route>
       <Route component={NotFound} />
     </Switch>
   </>;

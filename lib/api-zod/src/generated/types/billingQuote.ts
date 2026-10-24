@@ -26,7 +26,7 @@ export interface BillingQuote {
   /** @minimum 0 */
   renewalAmount: number;
   taxStatus: BillingQuoteTaxStatus;
-  payable: false;
+  payable: boolean;
   createdAt: string;
   expiresAt: string;
 }

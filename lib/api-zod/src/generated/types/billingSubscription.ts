@@ -10,9 +10,11 @@ import type { BillingSubscriptionLaunchOffer } from './billingSubscriptionLaunch
 import type { BillingSubscriptionPlan } from './billingSubscriptionPlan';
 import type { BillingSubscriptionStatus } from './billingSubscriptionStatus';
 
-export type BillingSubscription = BillingReadiness & {
+export type BillingSubscription = BillingReadiness & ({
   plan: BillingSubscriptionPlan;
   status: BillingSubscriptionStatus;
   launchOffer: BillingSubscriptionLaunchOffer;
   usageLimitsEnforced: false;
-};
+  /** @nullable */
+  periodEndsAt: Date | null;
+});

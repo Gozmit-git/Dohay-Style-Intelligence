@@ -11,4 +11,6 @@ export type BillingSubscriptionPlan = typeof BillingSubscriptionPlan[keyof typeo
 
 export const BillingSubscriptionPlan = {
   free: 'free',
+  plus: 'plus',
+  pro: 'pro',
 } as const;

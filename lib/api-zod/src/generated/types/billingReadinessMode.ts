@@ -11,4 +11,5 @@ export type BillingReadinessMode = typeof BillingReadinessMode[keyof typeof Bill
 
 export const BillingReadinessMode = {
   disabled: 'disabled',
+  manual_qr: 'manual_qr',
 } as const;

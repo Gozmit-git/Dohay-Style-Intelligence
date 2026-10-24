@@ -8,6 +8,7 @@
 
 export * from './attributeSource';
 export * from './attributeSourceSource';
+export * from './billingAdminOrder';
 export * from './billingBadRequestResponse';
 export * from './billingCatalog';
 export * from './billingCatalogAmountUnit';
@@ -18,8 +19,19 @@ export * from './billingCheckoutUnavailable';
 export * from './billingCheckoutUnavailableCode';
 export * from './billingConflictResponse';
 export * from './billingError';
+export * from './billingForbiddenResponse';
 export * from './billingLimits';
 export * from './billingNotFoundResponse';
+export * from './billingOrder';
+export * from './billingOrderAmountUnit';
+export * from './billingOrderCurrency';
+export * from './billingOrderDiscountPercent';
+export * from './billingOrderInterval';
+export * from './billingOrderPlan';
+export * from './billingOrderReviewInput';
+export * from './billingOrderReviewInputDecision';
+export * from './billingOrderStatus';
+export * from './billingPaymentSubmission';
 export * from './billingPlan';
 export * from './billingPlanId';
 export * from './billingQuote';

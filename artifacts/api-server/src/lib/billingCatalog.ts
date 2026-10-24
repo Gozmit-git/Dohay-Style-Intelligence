@@ -41,14 +41,12 @@ export function launchAdditions(
 }
 
 export function paymentReadiness() {
-  const blockers = [
-    "Subscription checkout, payment verification, webhooks, and renewal scheduling require a verified Pine Labs merchant contract.",
-    "Confirm introductory pricing, launch-cohort history, and tax treatment before enabling charges.",
-  ];
-  if (!process.env.PINELABS_SANDBOX_CLIENT_ID || !process.env.PINELABS_SANDBOX_CLIENT_SECRET) {
-    blockers.unshift("Pine Labs subscription sandbox credentials are not configured.");
-  }
-  // Deliberately cannot be enabled by setting an environment flag. No payment
-  // adapter is verified yet; an AgenticOrg agent result is not payment proof.
-  return { checkoutEnabled: false as const, mode: "disabled" as const, blockers };
+  const checkoutEnabled = Boolean(process.env.DOHAY_BILLING_ADMIN_EMAIL?.trim());
+  return {
+    checkoutEnabled,
+    mode: checkoutEnabled ? "manual_qr" as const : "disabled" as const,
+    blockers: checkoutEnabled
+      ? []
+      : ["DOHAY payment verification is being set up. Please check back before sending a payment."],
+  };
 }

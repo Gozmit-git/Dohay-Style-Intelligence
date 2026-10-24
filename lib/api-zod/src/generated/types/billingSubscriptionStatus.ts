@@ -11,4 +11,9 @@ export type BillingSubscriptionStatus = typeof BillingSubscriptionStatus[keyof t
 
 export const BillingSubscriptionStatus = {
   no_paid_subscription: 'no_paid_subscription',
+  awaiting_payment: 'awaiting_payment',
+  pending_review: 'pending_review',
+  active: 'active',
+  expired: 'expired',
+  payment_rejected: 'payment_rejected',
 } as const;

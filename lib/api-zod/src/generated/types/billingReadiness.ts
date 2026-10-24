@@ -8,7 +8,7 @@
 import type { BillingReadinessMode } from './billingReadinessMode';
 
 export interface BillingReadiness {
-  checkoutEnabled: false;
+  checkoutEnabled: boolean;
   mode: BillingReadinessMode;
   blockers: string[];
 }

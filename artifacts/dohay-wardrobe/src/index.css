@@ -459,7 +459,7 @@
   .side-rail{display:none}
   .mobile-header{height:59px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:hsl(var(--sidebar));color:hsl(var(--sidebar-foreground))}
   .mobile-header .brand-lockup{padding:0}
-  .mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:30;height:64px;display:grid;grid-template-columns:repeat(4,1fr);background:hsl(var(--sidebar));border-top:1px solid hsl(var(--sidebar-border));padding-bottom:env(safe-area-inset-bottom)}
+  .mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:30;height:64px;display:grid;grid-template-columns:repeat(5,1fr);background:hsl(var(--sidebar));border-top:1px solid hsl(var(--sidebar-border));padding-bottom:env(safe-area-inset-bottom)}
   .mobile-nav a {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:hsl(var(--sidebar-foreground)/.66);font-size:9px;text-decoration:none}
   .mobile-nav a.active {color:hsl(var(--sidebar-primary))}
   .main-stage{min-height:calc(100dvh - 123px)}

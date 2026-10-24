@@ -84,8 +84,8 @@ paths:
   /billing/checkout:
     post:
       operationId: startBillingCheckout
-      summary: Validate an owned quote; currently fails closed with PAYMENTS_NOT_READY
-      description: No provider adapter is enabled. This endpoint never takes payment, activates a subscription, or redeems an offer.
+      summary: Create an idempotent manual UPI payment order for an owned quote
+      description: Creates a pending order. A customer transaction reference never activates a subscription; a verified billing admin must approve it.
       security: [{ BillingSession: [] }]
       requestBody:
         required: true
@@ -93,15 +93,91 @@ paths:
           application/json:
             schema: { $ref: "#/components/schemas/BillingCheckoutInput" }
       responses:
+        "201":
+          description: Pending manual UPI order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingOrder" }
         "400": { $ref: "#/components/responses/BillingBadRequest" }
         "401": { $ref: "#/components/responses/BillingUnauthorized" }
         "404": { $ref: "#/components/responses/BillingNotFound" }
         "409": { $ref: "#/components/responses/BillingConflict" }
         "503":
-          description: Checkout is deliberately disabled
+          description: Manual payment review has not been configured
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BillingCheckoutUnavailable" }
+  /billing/orders/{orderId}:
+    parameters:
+      - { name: orderId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getBillingOrder
+      security: [{ BillingSession: [] }]
+      responses:
+        "200":
+          description: An order owned by the signed-in user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingOrder" }
+        "401": { $ref: "#/components/responses/BillingUnauthorized" }
+        "404": { $ref: "#/components/responses/BillingNotFound" }
+    post:
+      operationId: submitBillingPayment
+      summary: Submit a UPI transaction reference for manual review
+      security: [{ BillingSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BillingPaymentSubmission" }
+      responses:
+        "200":
+          description: Order remains pending until an admin verifies the transfer
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingOrder" }
+        "400": { $ref: "#/components/responses/BillingBadRequest" }
+        "401": { $ref: "#/components/responses/BillingUnauthorized" }
+        "404": { $ref: "#/components/responses/BillingNotFound" }
+        "409": { $ref: "#/components/responses/BillingConflict" }
+  /billing/admin/orders:
+    get:
+      operationId: listBillingAdminOrders
+      security: [{ BillingSession: [] }]
+      responses:
+        "200":
+          description: Orders awaiting manual payment review
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BillingAdminOrder" }
+        "401": { $ref: "#/components/responses/BillingUnauthorized" }
+        "403": { $ref: "#/components/responses/BillingForbidden" }
+        "503": { $ref: "#/components/responses/BillingUnavailable" }
+  /billing/admin/orders/{orderId}/review:
+    parameters:
+      - { name: orderId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: reviewBillingAdminOrder
+      security: [{ BillingSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BillingOrderReviewInput" }
+      responses:
+        "200":
+          description: The order after the verified admin decision
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingAdminOrder" }
+        "400": { $ref: "#/components/responses/BillingBadRequest" }
+        "401": { $ref: "#/components/responses/BillingUnauthorized" }
+        "403": { $ref: "#/components/responses/BillingForbidden" }
+        "404": { $ref: "#/components/responses/BillingNotFound" }
+        "409": { $ref: "#/components/responses/BillingConflict" }
+        "503": { $ref: "#/components/responses/BillingUnavailable" }
   /healthz:
     get:
       operationId: healthCheck
@@ -284,6 +360,11 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/BillingError" }
+    BillingForbidden:
+      description: This account is not authorized for billing review
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/BillingError" }
     BillingConflict:
       description: Expired quote or request key reused with different input
       content:
@@ -304,8 +385,8 @@ components:
       type: object
       required: [checkoutEnabled, mode, blockers]
       properties:
-        checkoutEnabled: { type: boolean, enum: [false] }
-        mode: { type: string, enum: [disabled] }
+        checkoutEnabled: { type: boolean }
+        mode: { type: string, enum: [disabled, manual_qr] }
         blockers: { type: array, items: { type: string } }
     BillingLimits:
       type: object
@@ -339,12 +420,13 @@ components:
       allOf:
         - $ref: "#/components/schemas/BillingReadiness"
         - type: object
-          required: [plan, status, launchOffer, usageLimitsEnforced]
+          required: [plan, status, launchOffer, usageLimitsEnforced, periodEndsAt]
           properties:
-            plan: { type: string, enum: [free] }
-            status: { type: string, enum: [no_paid_subscription] }
+            plan: { type: string, enum: [free, plus, pro] }
+            status: { type: string, enum: [no_paid_subscription, awaiting_payment, pending_review, active, expired, payment_rejected] }
             launchOffer: { type: string, enum: [eligible, redeemed, not_yet_evaluated] }
             usageLimitsEnforced: { type: boolean, enum: [false] }
+            periodEndsAt: { type: ["string", "null"], format: date-time }
     BillingQuoteInput:
       type: object
       additionalProperties: false
@@ -367,7 +449,7 @@ components:
         discountPercent: { type: integer, enum: [0, 70] }
         renewalAmount: { type: integer, minimum: 0 }
         taxStatus: { type: string, enum: [not_configured] }
-        payable: { type: boolean, enum: [false] }
+        payable: { type: boolean }
         createdAt: { type: string }
         expiresAt: { type: string }
     BillingCheckoutInput:
@@ -384,6 +466,45 @@ components:
           properties:
             error: { type: string }
             code: { type: string, enum: [PAYMENTS_NOT_READY] }
+    BillingOrder:
+      type: object
+      required: [id, quoteId, plan, interval, currency, amountUnit, firstTermAmount, regularAmount, discountPercent, status, transactionReference, submittedAt, reviewedAt, periodStartsAt, periodEndsAt, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        quoteId: { type: string, format: uuid }
+        plan: { type: string, enum: [plus, pro] }
+        interval: { type: string, enum: [month, year] }
+        currency: { type: string, enum: [INR] }
+        amountUnit: { type: string, enum: [paise] }
+        firstTermAmount: { type: integer, minimum: 0 }
+        regularAmount: { type: integer, minimum: 0 }
+        discountPercent: { type: integer, enum: [0, 70] }
+        status: { type: string, enum: [awaiting_payment, pending_review, approved, rejected] }
+        transactionReference: { type: ["string", "null"], maxLength: 80 }
+        submittedAt: { type: ["string", "null"], format: date-time }
+        reviewedAt: { type: ["string", "null"], format: date-time }
+        periodStartsAt: { type: ["string", "null"], format: date-time }
+        periodEndsAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+    BillingAdminOrder:
+      allOf:
+        - $ref: "#/components/schemas/BillingOrder"
+        - type: object
+          required: [userId]
+          properties:
+            userId: { type: string }
+    BillingPaymentSubmission:
+      type: object
+      additionalProperties: false
+      required: [transactionReference]
+      properties:
+        transactionReference: { type: string, minLength: 6, maxLength: 80, pattern: "^[A-Za-z0-9-]+$" }
+    BillingOrderReviewInput:
+      type: object
+      additionalProperties: false
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [approve, reject] }
     HealthStatus:
       type: object
       properties:

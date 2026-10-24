@@ -26,8 +26,8 @@ export const listBillingPlansResponseTwoPlansItemLimitsOutfitRequestsMin = 0;
 
 
 export const ListBillingPlansResponse = zod.object({
-  "checkoutEnabled": zod.literal(false),
-  "mode": zod.enum(['disabled']),
+  "checkoutEnabled": zod.boolean(),
+  "mode": zod.enum(['disabled', 'manual_qr']),
   "blockers": zod.array(zod.string())
 }).and(zod.object({
   "currency": zod.enum(['INR']),
@@ -50,14 +50,15 @@ export const ListBillingPlansResponse = zod.object({
 
 
 export const GetBillingSubscriptionResponse = zod.object({
-  "checkoutEnabled": zod.literal(false),
-  "mode": zod.enum(['disabled']),
+  "checkoutEnabled": zod.boolean(),
+  "mode": zod.enum(['disabled', 'manual_qr']),
   "blockers": zod.array(zod.string())
 }).and(zod.object({
-  "plan": zod.enum(['free']),
-  "status": zod.enum(['no_paid_subscription']),
+  "plan": zod.enum(['free', 'plus', 'pro']),
+  "status": zod.enum(['no_paid_subscription', 'awaiting_payment', 'pending_review', 'active', 'expired', 'payment_rejected']),
   "launchOffer": zod.enum(['eligible', 'redeemed', 'not_yet_evaluated']),
-  "usageLimitsEnforced": zod.literal(false)
+  "usageLimitsEnforced": zod.literal(false),
+  "periodEndsAt": zod.coerce.date().nullable()
 }))
 
 
@@ -89,7 +90,7 @@ export const CreateBillingQuoteResponse = zod.object({
   "discountPercent": zod.union([zod.literal(0),zod.literal(70)]),
   "renewalAmount": zod.number().int().min(createBillingQuoteResponseRenewalAmountMin),
   "taxStatus": zod.enum(['not_configured']),
-  "payable": zod.literal(false),
+  "payable": zod.boolean(),
   "createdAt": zod.string(),
   "expiresAt": zod.string()
 })
@@ -118,21 +119,193 @@ export const GetBillingQuoteResponse = zod.object({
   "discountPercent": zod.union([zod.literal(0),zod.literal(70)]),
   "renewalAmount": zod.number().int().min(getBillingQuoteResponseRenewalAmountMin),
   "taxStatus": zod.enum(['not_configured']),
-  "payable": zod.literal(false),
+  "payable": zod.boolean(),
   "createdAt": zod.string(),
   "expiresAt": zod.string()
 })
 
 
 /**
- * No provider adapter is enabled. This endpoint never takes payment, activates a subscription, or redeems an offer.
- * @summary Validate an owned quote; currently fails closed with PAYMENTS_NOT_READY
+ * Creates a pending order. A customer transaction reference never activates a subscription; a verified billing admin must approve it.
+ * @summary Create an idempotent manual UPI payment order for an owned quote
  */
 export const StartBillingCheckoutBody = zod.object({
   "quoteId": zod.string().uuid()
 })
 
-export const StartBillingCheckoutResponse = zod.void()
+export const startBillingCheckoutResponseFirstTermAmountMin = 0;
+
+export const startBillingCheckoutResponseRegularAmountMin = 0;
+
+export const startBillingCheckoutResponseTransactionReferenceMax = 80;
+
+
+
+export const StartBillingCheckoutResponse = zod.object({
+  "id": zod.string().uuid(),
+  "quoteId": zod.string().uuid(),
+  "plan": zod.enum(['plus', 'pro']),
+  "interval": zod.enum(['month', 'year']),
+  "currency": zod.enum(['INR']),
+  "amountUnit": zod.enum(['paise']),
+  "firstTermAmount": zod.number().int().min(startBillingCheckoutResponseFirstTermAmountMin),
+  "regularAmount": zod.number().int().min(startBillingCheckoutResponseRegularAmountMin),
+  "discountPercent": zod.union([zod.literal(0),zod.literal(70)]),
+  "status": zod.enum(['awaiting_payment', 'pending_review', 'approved', 'rejected']),
+  "transactionReference": zod.string().max(startBillingCheckoutResponseTransactionReferenceMax).nullable(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "periodStartsAt": zod.coerce.date().nullable(),
+  "periodEndsAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date()
+})
+
+
+export const GetBillingOrderParams = zod.object({
+  "orderId": zod.coerce.string().uuid()
+})
+
+export const getBillingOrderResponseFirstTermAmountMin = 0;
+
+export const getBillingOrderResponseRegularAmountMin = 0;
+
+export const getBillingOrderResponseTransactionReferenceMax = 80;
+
+
+
+export const GetBillingOrderResponse = zod.object({
+  "id": zod.string().uuid(),
+  "quoteId": zod.string().uuid(),
+  "plan": zod.enum(['plus', 'pro']),
+  "interval": zod.enum(['month', 'year']),
+  "currency": zod.enum(['INR']),
+  "amountUnit": zod.enum(['paise']),
+  "firstTermAmount": zod.number().int().min(getBillingOrderResponseFirstTermAmountMin),
+  "regularAmount": zod.number().int().min(getBillingOrderResponseRegularAmountMin),
+  "discountPercent": zod.union([zod.literal(0),zod.literal(70)]),
+  "status": zod.enum(['awaiting_payment', 'pending_review', 'approved', 'rejected']),
+  "transactionReference": zod.string().max(getBillingOrderResponseTransactionReferenceMax).nullable(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "periodStartsAt": zod.coerce.date().nullable(),
+  "periodEndsAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Submit a UPI transaction reference for manual review
+ */
+export const SubmitBillingPaymentParams = zod.object({
+  "orderId": zod.coerce.string().uuid()
+})
+
+export const submitBillingPaymentBodyTransactionReferenceMin = 6;
+export const submitBillingPaymentBodyTransactionReferenceMax = 80;
+
+
+export const submitBillingPaymentBodyTransactionReferenceRegExp = new RegExp('^[A-Za-z0-9-]+$');
+
+
+export const SubmitBillingPaymentBody = zod.object({
+  "transactionReference": zod.string().min(submitBillingPaymentBodyTransactionReferenceMin).max(submitBillingPaymentBodyTransactionReferenceMax).regex(submitBillingPaymentBodyTransactionReferenceRegExp)
+})
+
+export const submitBillingPaymentResponseFirstTermAmountMin = 0;
+
+export const submitBillingPaymentResponseRegularAmountMin = 0;
+
+export const submitBillingPaymentResponseTransactionReferenceMax = 80;
+
+
+
+export const SubmitBillingPaymentResponse = zod.object({
+  "id": zod.string().uuid(),
+  "quoteId": zod.string().uuid(),
+  "plan": zod.enum(['plus', 'pro']),
+  "interval": zod.enum(['month', 'year']),
+  "currency": zod.enum(['INR']),
+  "amountUnit": zod.enum(['paise']),
+  "firstTermAmount": zod.number().int().min(submitBillingPaymentResponseFirstTermAmountMin),
+  "regularAmount": zod.number().int().min(submitBillingPaymentResponseRegularAmountMin),
+  "discountPercent": zod.union([zod.literal(0),zod.literal(70)]),
+  "status": zod.enum(['awaiting_payment', 'pending_review', 'approved', 'rejected']),
+  "transactionReference": zod.string().max(submitBillingPaymentResponseTransactionReferenceMax).nullable(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "periodStartsAt": zod.coerce.date().nullable(),
+  "periodEndsAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date()
+})
+
+
+export const listBillingAdminOrdersResponseOneFirstTermAmountMin = 0;
+
+export const listBillingAdminOrdersResponseOneRegularAmountMin = 0;
+
+export const listBillingAdminOrdersResponseOneTransactionReferenceMax = 80;
+
+
+
+export const ListBillingAdminOrdersResponseItem = zod.object({
+  "id": zod.string().uuid(),
+  "quoteId": zod.string().uuid(),
+  "plan": zod.enum(['plus', 'pro']),
+  "interval": zod.enum(['month', 'year']),
+  "currency": zod.enum(['INR']),
+  "amountUnit": zod.enum(['paise']),
+  "firstTermAmount": zod.number().int().min(listBillingAdminOrdersResponseOneFirstTermAmountMin),
+  "regularAmount": zod.number().int().min(listBillingAdminOrdersResponseOneRegularAmountMin),
+  "discountPercent": zod.union([zod.literal(0),zod.literal(70)]),
+  "status": zod.enum(['awaiting_payment', 'pending_review', 'approved', 'rejected']),
+  "transactionReference": zod.string().max(listBillingAdminOrdersResponseOneTransactionReferenceMax).nullable(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "periodStartsAt": zod.coerce.date().nullable(),
+  "periodEndsAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date()
+}).and(zod.object({
+  "userId": zod.string()
+}))
+export const ListBillingAdminOrdersResponse = zod.array(ListBillingAdminOrdersResponseItem)
+
+
+export const ReviewBillingAdminOrderParams = zod.object({
+  "orderId": zod.coerce.string().uuid()
+})
+
+export const ReviewBillingAdminOrderBody = zod.object({
+  "decision": zod.enum(['approve', 'reject'])
+})
+
+export const reviewBillingAdminOrderResponseOneFirstTermAmountMin = 0;
+
+export const reviewBillingAdminOrderResponseOneRegularAmountMin = 0;
+
+export const reviewBillingAdminOrderResponseOneTransactionReferenceMax = 80;
+
+
+
+export const ReviewBillingAdminOrderResponse = zod.object({
+  "id": zod.string().uuid(),
+  "quoteId": zod.string().uuid(),
+  "plan": zod.enum(['plus', 'pro']),
+  "interval": zod.enum(['month', 'year']),
+  "currency": zod.enum(['INR']),
+  "amountUnit": zod.enum(['paise']),
+  "firstTermAmount": zod.number().int().min(reviewBillingAdminOrderResponseOneFirstTermAmountMin),
+  "regularAmount": zod.number().int().min(reviewBillingAdminOrderResponseOneRegularAmountMin),
+  "discountPercent": zod.union([zod.literal(0),zod.literal(70)]),
+  "status": zod.enum(['awaiting_payment', 'pending_review', 'approved', 'rejected']),
+  "transactionReference": zod.string().max(reviewBillingAdminOrderResponseOneTransactionReferenceMax).nullable(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "periodStartsAt": zod.coerce.date().nullable(),
+  "periodEndsAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date()
+}).and(zod.object({
+  "userId": zod.string()
+}))
 
 
 /**

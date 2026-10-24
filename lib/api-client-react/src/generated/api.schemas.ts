@@ -14,10 +14,11 @@ export type BillingReadinessMode = typeof BillingReadinessMode[keyof typeof Bill
 
 export const BillingReadinessMode = {
   disabled: 'disabled',
+  manual_qr: 'manual_qr',
 } as const;
 
 export interface BillingReadiness {
-  checkoutEnabled: false;
+  checkoutEnabled: boolean;
   mode: BillingReadinessMode;
   blockers: string[];
 }
@@ -86,6 +87,8 @@ export type BillingSubscriptionPlan = typeof BillingSubscriptionPlan[keyof typeo
 
 export const BillingSubscriptionPlan = {
   free: 'free',
+  plus: 'plus',
+  pro: 'pro',
 } as const;
 
 export type BillingSubscriptionStatus = typeof BillingSubscriptionStatus[keyof typeof BillingSubscriptionStatus];
@@ -93,6 +96,11 @@ export type BillingSubscriptionStatus = typeof BillingSubscriptionStatus[keyof t
 
 export const BillingSubscriptionStatus = {
   no_paid_subscription: 'no_paid_subscription',
+  awaiting_payment: 'awaiting_payment',
+  pending_review: 'pending_review',
+  active: 'active',
+  expired: 'expired',
+  payment_rejected: 'payment_rejected',
 } as const;
 
 export type BillingSubscriptionLaunchOffer = typeof BillingSubscriptionLaunchOffer[keyof typeof BillingSubscriptionLaunchOffer];
@@ -104,12 +112,14 @@ export const BillingSubscriptionLaunchOffer = {
   not_yet_evaluated: 'not_yet_evaluated',
 } as const;
 
-export type BillingSubscription = BillingReadiness & {
+export type BillingSubscription = BillingReadiness & ({
   plan: BillingSubscriptionPlan;
   status: BillingSubscriptionStatus;
   launchOffer: BillingSubscriptionLaunchOffer;
   usageLimitsEnforced: false;
-};
+  /** @nullable */
+  periodEndsAt: string | null;
+});
 
 export type BillingQuoteInputPlan = typeof BillingQuoteInputPlan[keyof typeof BillingQuoteInputPlan];
 
@@ -193,7 +203,7 @@ export interface BillingQuote {
   /** @minimum 0 */
   renewalAmount: number;
   taxStatus: BillingQuoteTaxStatus;
-  payable: false;
+  payable: boolean;
   createdAt: string;
   expiresAt: string;
 }
@@ -213,6 +223,108 @@ export type BillingCheckoutUnavailable = BillingReadiness & {
   error: string;
   code: BillingCheckoutUnavailableCode;
 };
+
+export type BillingOrderPlan = typeof BillingOrderPlan[keyof typeof BillingOrderPlan];
+
+
+export const BillingOrderPlan = {
+  plus: 'plus',
+  pro: 'pro',
+} as const;
+
+export type BillingOrderInterval = typeof BillingOrderInterval[keyof typeof BillingOrderInterval];
+
+
+export const BillingOrderInterval = {
+  month: 'month',
+  year: 'year',
+} as const;
+
+export type BillingOrderCurrency = typeof BillingOrderCurrency[keyof typeof BillingOrderCurrency];
+
+
+export const BillingOrderCurrency = {
+  INR: 'INR',
+} as const;
+
+export type BillingOrderAmountUnit = typeof BillingOrderAmountUnit[keyof typeof BillingOrderAmountUnit];
+
+
+export const BillingOrderAmountUnit = {
+  paise: 'paise',
+} as const;
+
+export type BillingOrderDiscountPercent = typeof BillingOrderDiscountPercent[keyof typeof BillingOrderDiscountPercent];
+
+
+export const BillingOrderDiscountPercent = {
+  NUMBER_0: 0,
+  NUMBER_70: 70,
+} as const;
+
+export type BillingOrderStatus = typeof BillingOrderStatus[keyof typeof BillingOrderStatus];
+
+
+export const BillingOrderStatus = {
+  awaiting_payment: 'awaiting_payment',
+  pending_review: 'pending_review',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface BillingOrder {
+  id: string;
+  quoteId: string;
+  plan: BillingOrderPlan;
+  interval: BillingOrderInterval;
+  currency: BillingOrderCurrency;
+  amountUnit: BillingOrderAmountUnit;
+  /** @minimum 0 */
+  firstTermAmount: number;
+  /** @minimum 0 */
+  regularAmount: number;
+  discountPercent: BillingOrderDiscountPercent;
+  status: BillingOrderStatus;
+  /**
+     * @maxLength 80
+     * @nullable
+     */
+  transactionReference: string | null;
+  /** @nullable */
+  submittedAt: string | null;
+  /** @nullable */
+  reviewedAt: string | null;
+  /** @nullable */
+  periodStartsAt: string | null;
+  /** @nullable */
+  periodEndsAt: string | null;
+  createdAt: string;
+}
+
+export type BillingAdminOrder = BillingOrder & {
+  userId: string;
+};
+
+export interface BillingPaymentSubmission {
+  /**
+     * @minLength 6
+     * @maxLength 80
+     * @pattern ^[A-Za-z0-9-]+$
+     */
+  transactionReference: string;
+}
+
+export type BillingOrderReviewInputDecision = typeof BillingOrderReviewInputDecision[keyof typeof BillingOrderReviewInputDecision];
+
+
+export const BillingOrderReviewInputDecision = {
+  approve: 'approve',
+  reject: 'reject',
+} as const;
+
+export interface BillingOrderReviewInput {
+  decision: BillingOrderReviewInputDecision;
+}
 
 export interface HealthStatus {
   status: string;
@@ -774,6 +886,11 @@ export type BillingUnauthorizedResponse = BillingError;
  * Resource missing or owned by another user
  */
 export type BillingNotFoundResponse = BillingError;
+
+/**
+ * This account is not authorized for billing review
+ */
+export type BillingForbiddenResponse = BillingError;
 
 /**
  * Expired quote or request key reused with different input
