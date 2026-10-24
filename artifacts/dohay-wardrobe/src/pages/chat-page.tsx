@@ -600,10 +600,8 @@ export function ChatPage() {
         {sendError && <div className="chat-error">{sendError}<button type="button" className="text-retry" onClick={() => setSendError("")}>Dismiss</button></div>}
         <div className="composer">
           <VoiceControls voice={voice} draft={text} disabled={isBusy} />
-          <div className="suggestion-row" aria-label="Photo purpose" style={{ padding: "12px 14px 0" }}>
-            <strong>Styling changes in Image</strong>
-          </div>
-          <p className="private-note">Share an outfit selfie for an AI styling simulation. Your original stays unchanged; the image is not a fit guarantee and never adds wardrobe items.</p>
+          <h2 className="composer-heading">Styling changes in image</h2>
+          <p className="composer-description">AI preview · your original stays unchanged · not a fit guarantee.</p>
           {photos.length > 0 && <div className="attachment-tray">{photos.map((photo) => <div className="attachment-thumb" key={photo.id}><img src={photo.preview} alt={photo.file.name} /><button type="button" className="attachment-remove" aria-label={`Remove ${photo.file.name}`} onClick={() => removePhoto(photo.id)}><X size={12} /></button></div>)}</div>}
           <textarea value={text} maxLength={4000} onChange={(event) => { if (voice.listening) voice.stopListening(); setText(event.target.value); }} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void handleSend(); } }} placeholder="Type or dictate what you’re deciding…" aria-label="Message DOHAY" />
           <div className="composer-toolbar">
@@ -617,7 +615,7 @@ export function ChatPage() {
             <button type="button" className="composer-send" disabled={isBusy || (!text.trim() && photos.length === 0)} aria-label="Send message" onClick={() => void handleSend()}>{isBusy ? <LoaderCircle size={16} className="spin" /> : <ArrowUp size={17} />}</button>
           </div>
         </div>
-        <p className="private-note"><ShieldCheck size={12} /> Your photos stay private. Styling images never add items to your wardrobe.</p>
+        <p className="private-note"><ShieldCheck size={12} /> Photos stay private; styling images never add wardrobe items.</p>
       </div>
     </section>
   );
