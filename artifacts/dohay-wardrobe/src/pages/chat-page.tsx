@@ -606,8 +606,8 @@ export function ChatPage() {
           <div className="composer-toolbar">
             <div className="composer-tools">
               <VoiceControls voice={voice} draft={text} disabled={isBusy} />
-              <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => selfiePicker.current?.click()}><Camera size={15} /><span>Take outfit selfie</span></button>
-              <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => picker.current?.click()} title={!hasImageConsent ? "Give photo consent first" : "Choose photos"}><Plus size={15} /><span>Choose photos</span></button>
+              <button type="button" className="composer-tool" aria-label="Take outfit selfie" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => selfiePicker.current?.click()}><Camera size={15} /><span>Take outfit selfie</span></button>
+              <button type="button" className="composer-tool" aria-label="Choose photos" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => picker.current?.click()} title={!hasImageConsent ? "Give photo consent first" : "Choose photos"}><Plus size={15} /><span>Choose photos</span></button>
               <input ref={selfiePicker} type="file" hidden accept="image/jpeg,image/png,image/webp" capture="user" onChange={(event) => { addFiles(event.target.files); event.target.value = ""; }} />
               <input ref={picker} type="file" hidden accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => { addFiles(event.target.files); event.target.value = ""; }} />
               <span className="file-hint">{hasImageConsent ? "JPEG, PNG or WebP · 10 MB each · up to 3" : "Text chat works without photo access"}</span>

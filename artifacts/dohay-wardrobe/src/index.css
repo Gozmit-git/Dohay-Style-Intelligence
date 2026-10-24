@@ -528,3 +528,32 @@
   .landing-close{padding:53px 16px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+/* Phone ergonomics: safe areas, readable fields, and a composer above navigation. */
+@media(max-width:700px){
+  .app-frame{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .main-stage{min-width:0}
+  .main-stage .mobile-nav{height:calc(64px + env(safe-area-inset-bottom,0px));grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(57px,1fr);overflow-x:auto;padding-inline:env(safe-area-inset-left,0px) env(safe-area-inset-right,0px)}
+  .mobile-nav a{min-height:44px}
+  .chat-page{height:calc(100dvh - 123px - env(safe-area-inset-bottom,0px));min-height:0}
+  .conversation-scroll{min-height:0;overscroll-behavior-y:contain;overflow-wrap:anywhere}
+  .chat-top{gap:8px;flex-wrap:wrap;flex-shrink:0}
+  .chat-top-actions{max-width:100%;gap:6px}
+  .chat-top-actions .thread-select{min-width:0;max-width:160px}
+  .composer-shell{flex-shrink:0;padding-bottom:8px}
+  .composer textarea,.app-frame input:not([type=checkbox]):not([type=radio]):not([type=file]),.app-frame select,.app-frame textarea{font-size:16px}
+  .composer-tools{min-width:0;flex-wrap:wrap;gap:4px}
+  .composer-toolbar{gap:6px;align-items:flex-end}
+  .composer-tool,.composer-send,.voice-dictate,.button,.thread-select{min-height:44px}
+  .composer-tool,.composer-send{min-width:44px}
+  .page-content{overflow-wrap:anywhere}
+  .profile-form,.profile-layout,.context-grid{min-width:0}
+  .landing-title{font-size:clamp(42px,12vw,62px)}
+  .landing-nav{gap:10px;flex-wrap:wrap}
+  .landing-nav .button{font-size:12px;min-height:44px}
+}
+@media(max-width:360px){
+  .wardrobe-grid{grid-template-columns:1fr}
+  .chat-top-actions{width:100%;justify-content:space-between}
+  .welcome-title{font-size:42px}
+}
