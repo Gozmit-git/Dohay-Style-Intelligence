@@ -599,7 +599,6 @@ export function ChatPage() {
         </div>}
         {sendError && <div className="chat-error">{sendError}<button type="button" className="text-retry" onClick={() => setSendError("")}>Dismiss</button></div>}
         <div className="composer">
-          <h2 className="composer-heading">Styling changes in image</h2>
           <p className="composer-description">AI preview · your original stays unchanged · not a fit guarantee.</p>
           {photos.length > 0 && <div className="attachment-tray">{photos.map((photo) => <div className="attachment-thumb" key={photo.id}><img src={photo.preview} alt={photo.file.name} /><button type="button" className="attachment-remove" aria-label={`Remove ${photo.file.name}`} onClick={() => removePhoto(photo.id)}><X size={12} /></button></div>)}</div>}
           <textarea value={text} maxLength={4000} onChange={(event) => { if (voice.listening) voice.stopListening(); setText(event.target.value); }} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void handleSend(); } }} placeholder="Type or dictate what you’re deciding…" aria-label="Message DOHAY" />
