@@ -180,6 +180,7 @@ paths:
               properties:
                 content: { type: string, maxLength: 4000 }
                 objectPaths: { type: array, maxItems: 10, items: { type: string } }
+                photoPurpose: { type: string, enum: [fit_check, wardrobe], default: fit_check, description: "Review the outfit being worn, or explicitly scan clothing into wardrobe drafts." }
               required: [content]
       responses:
         "200":

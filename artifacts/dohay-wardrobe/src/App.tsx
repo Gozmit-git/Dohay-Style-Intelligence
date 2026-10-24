@@ -61,8 +61,8 @@ function LandingPage() {
       <div>
         <span className="eyebrow">Personal styling that remembers your real closet</span>
         <h1 className="landing-title">What should I<br />wear with <em>what I own?</em></h1>
-        <p className="page-subtitle landing-lede">DOHAY is a personal styling conversation built around the clothes already in your life. Ask, add, and find a new way to wear what is yours.</p>
-        <div className="landing-ctas"><Link className="button" href="/sign-up">Start a conversation <ArrowRight size={14} /></Link><Link className="button button-quiet" href="/sign-in">I already have an account</Link></div>
+        <p className="page-subtitle landing-lede">Take an outfit selfie and ask, “How do I look?” Get a quick fit check on colours, visible fit, and styling—no wardrobe setup needed.</p>
+        <div className="landing-ctas"><Link className="button" href="/sign-up">Get a quick fit check <ArrowRight size={14} /></Link><Link className="button button-quiet" href="/sign-in">I already have an account</Link></div>
         <div className="landing-trust"><span><ShieldMini /> Only your confirmed pieces</span><span><ShieldMini /> Photo consent is always yours</span></div>
       </div>
       <div className="landing-image" role="img" aria-label="Illustration of a small edited wardrobe on a clothing rail">

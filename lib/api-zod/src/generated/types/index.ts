@@ -49,6 +49,7 @@ export * from './recommendMvpOutfitsBody';
 export * from './recordMvpOutfitFeedbackBody';
 export * from './recordMvpOutfitFeedbackBodyAction';
 export * from './sendMvpMessageBody';
+export * from './sendMvpMessageBodyPhotoPurpose';
 export * from './startMvpScanBody';
 export * from './swapMvpOutfitItemBody';
 export * from './uploadRequest';

@@ -9,6 +9,7 @@ import {
   getListMvpOutfitsQueryKey,
   getListMvpThreadsQueryKey,
   getListMvpWardrobeQueryKey,
+  listMvpMessages,
   useCreateMvpThread,
   useCreateMvpUpload,
   useGetMvpProfile,
@@ -124,6 +125,7 @@ export function ChatPage() {
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
+  const [photoPurpose, setPhotoPurpose] = useState<"fit_check" | "wardrobe">("fit_check");
   const photosRef = useRef(photos);
   photosRef.current = photos;
   const [sendError, setSendError] = useState("");
@@ -138,6 +140,7 @@ export function ChatPage() {
   const [consentError, setConsentError] = useState("");
   const [weatherError, setWeatherError] = useState("");
   const picker = useRef<HTMLInputElement>(null);
+  const selfiePicker = useRef<HTMLInputElement>(null);
   const conversationEnd = useRef<HTMLDivElement>(null);
   const previousThread = useRef<string | null>(null);
   const profilePrefilledThread = useRef<string | null>(null);
@@ -217,9 +220,10 @@ export function ChatPage() {
   const addFiles = (fileList: FileList | null) => {
     if (!fileList) return;
     const selected = Array.from(fileList);
-    const remaining = 10 - photos.length;
+    const limit = photoPurpose === "fit_check" ? 3 : 10;
+    const remaining = limit - photos.length;
     if (selected.length > remaining) {
-      setSendError("You can attach up to 10 photos in one message.");
+      setSendError(`You can attach up to ${limit} photos in this mode.`);
       return;
     }
     const invalidType = selected.find((file) => !acceptedTypes.includes(file.type));
@@ -279,8 +283,13 @@ export function ChatPage() {
   };
 
   const handleSend = async (overrideText?: string) => {
+    if (sending) return;
     const content = (overrideText ?? text).trim();
     if (!content && photos.length === 0) return;
+    if (photoPurpose === "fit_check" && photos.length > 3) {
+      setSendError("Keep up to three photos for a quick fit check, or switch to Add to wardrobe.");
+      return;
+    }
     if (photos.length && !hasImageConsent) {
       setSendError("Please give explicit image consent before uploading photos.");
       return;
@@ -295,15 +304,26 @@ export function ChatPage() {
       let threadId = activeThreadId;
       if (!threadId) threadId = await createConversation(content);
       const objectPaths = photos.length ? await uploadPhotos() : undefined;
-      const finalContent = content || "Please identify these garments for my wardrobe.";
-      await sendMessage.mutateAsync({ threadId, data: { content: finalContent, objectPaths } });
+      const finalContent = content || (photoPurpose === "fit_check" ? "How does my outfit look? Give me a quick fit check." : "Please identify these garments for my wardrobe.");
+      const reply = await sendMessage.mutateAsync({ threadId, data: { content: finalContent, objectPaths, photoPurpose } });
+      const messageKey = getListMvpMessagesQueryKey(threadId);
+      setActiveThreadId(threadId);
+      // Show the confirmed server reply immediately, even if a background
+      // invalidation has no active observer during a conversation transition.
+      queryClient.setQueryData<MvpMessage[]>(messageKey, (current = []) =>
+        [...current.filter((message) => message.id !== reply.id), reply]);
       setText("");
       photos.forEach((photo) => URL.revokeObjectURL(photo.preview));
       setPhotos([]);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: getListMvpMessagesQueryKey(threadId) }),
-        queryClient.invalidateQueries({ queryKey: getListMvpThreadsQueryKey() }),
-      ]);
+      try {
+        const persisted = await listMvpMessages(threadId);
+        queryClient.setQueryData(messageKey, persisted);
+      } catch {
+        // Sending succeeded. Keep its reply visible rather than reporting a
+        // failed send or inviting an accidental duplicate photo submission.
+        void queryClient.invalidateQueries({ queryKey: messageKey });
+      }
+      void queryClient.invalidateQueries({ queryKey: getListMvpThreadsQueryKey() });
     } catch (error) {
       setSendError(error instanceof Error && error.message.includes("upload")
         ? error.message
@@ -384,9 +404,15 @@ export function ChatPage() {
         <div className="chat-top-copy">
           <span className="eyebrow">Your personal stylist</span>
           <h1>Let’s get dressed.</h1>
-          <p>Clothes you own. Advice that remembers.</p>
+          <p>Take an outfit selfie. Get a quick, honest fit check.</p>
         </div>
         <div className="chat-top-actions">
+          <button className="button button-small" type="button" disabled={isBusy} onClick={() => {
+            setPhotoPurpose("fit_check");
+            setText("How does my outfit look? Give me a quick fit check.");
+            if (hasImageConsent) selfiePicker.current?.click();
+            else setConsentError("Enable photo uploads below, then take or choose your outfit selfie.");
+          }}><Camera size={13} /> Quick fit check</button>
           {threads.length > 0 && <select className="thread-select" aria-label="Choose conversation" value={activeThreadId ?? ""} onChange={(event) => setActiveThreadId(event.target.value || null)}>
             {threads.map((thread) => <option value={thread.id} key={thread.id}>{thread.title || "Styling conversation"}</option>)}
           </select>}
@@ -404,8 +430,8 @@ export function ChatPage() {
           {!messagesQuery.isLoading && !messagesQuery.isError && messages.length === 0 && (
             <div className="conversation-welcome">
               <div className="welcome-kicker"><Sparkles size={13} /> Good style starts with what you own</div>
-              <h2 className="welcome-title">A wardrobe that’s <em>already yours.</em></h2>
-              <p className="welcome-text">Tell me what you’re dressing for, ask about something in your closet, or add a few pieces. I’ll work with your real wardrobe—not make one up.</p>
+              <h2 className="welcome-title">Your outfit. <em>A fresh opinion.</em></h2>
+              <p className="welcome-text">Take or upload an outfit selfie and ask, “How do I look?” Get a quick review of what works and a few styling tweaks. No wardrobe setup needed.</p>
               <div className="suggestion-row">
                 {starterPrompts.map((prompt) => <button className="suggestion-chip" type="button" key={prompt} onClick={() => { setText(prompt); if (prompt.toLowerCase().includes("dinner")) { setContext({ ...initialContext, occasion: "Dinner" }); setShowContext(true); } }}>{prompt}</button>)}
               </div>
@@ -436,7 +462,7 @@ export function ChatPage() {
               )}
             </div>
           )}
-          {sending && <div className="conversation-message"><span className="message-mark">D</span><div className="message-content"><span className="message-meta">DOHAY</span><span className="loading-dots">Thinking through your wardrobe…</span></div></div>}
+          {sending && <div className="conversation-message"><span className="message-mark">D</span><div className="message-content"><span className="message-meta">DOHAY</span><span className="loading-dots">{photos.length && photoPurpose === "fit_check" ? "Reviewing your outfit…" : "Thinking through your wardrobe…"}</span></div></div>}
           {recommendation && recommendationsToShow.length > 0 && (
             <section className="recommendation-result">
               <div className="recommendation-heading"><div><span className="eyebrow">Made from your available pieces</span><h2>Three ways to wear it</h2></div><button type="button" className="icon-button" aria-label="Dismiss outfit suggestions" onClick={() => setRecommendation(null)}><X size={15} /></button></div>
@@ -482,13 +508,20 @@ export function ChatPage() {
         </div>}
         {sendError && <div className="chat-error">{sendError}<button type="button" className="text-retry" onClick={() => setSendError("")}>Dismiss</button></div>}
         <div className="composer">
+          <div className="suggestion-row" aria-label="Photo purpose" style={{ padding: "12px 14px 0" }}>
+            <button type="button" className={`button button-small ${photoPurpose === "fit_check" ? "" : "button-quiet"}`} aria-pressed={photoPurpose === "fit_check"} disabled={isBusy} onClick={() => setPhotoPurpose("fit_check")}>Quick fit check</button>
+            <button type="button" className={`button button-small ${photoPurpose === "wardrobe" ? "" : "button-quiet"}`} aria-pressed={photoPurpose === "wardrobe"} disabled={isBusy} onClick={() => setPhotoPurpose("wardrobe")}>Add to wardrobe</button>
+          </div>
+          <p className="private-note">{photoPurpose === "fit_check" ? "Show your whole outfit if possible. Your face is optional. The review stays in this private chat; it won’t add wardrobe items." : "Identify individual pieces, then review and confirm before saving."}</p>
           {photos.length > 0 && <div className="attachment-tray">{photos.map((photo) => <div className="attachment-thumb" key={photo.id}><img src={photo.preview} alt={photo.file.name} /><button type="button" className="attachment-remove" aria-label={`Remove ${photo.file.name}`} onClick={() => removePhoto(photo.id)}><X size={12} /></button></div>)}</div>}
           <textarea value={text} maxLength={4000} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void handleSend(); } }} placeholder="Tell me what you’re deciding…" aria-label="Message DOHAY" />
           <div className="composer-toolbar">
             <div className="composer-tools">
-              <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= 10} onClick={() => picker.current?.click()} title={!hasImageConsent ? "Give photo consent first" : "Add clothing photos"}><Camera size={15} /><span>Add clothing photos</span></button>
+              {photoPurpose === "fit_check" && <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= 3 || isBusy} onClick={() => selfiePicker.current?.click()}><Camera size={15} /><span>Take outfit selfie</span></button>}
+              <button type="button" className="composer-tool" disabled={!hasImageConsent || photos.length >= (photoPurpose === "fit_check" ? 3 : 10) || isBusy} onClick={() => picker.current?.click()} title={!hasImageConsent ? "Give photo consent first" : "Choose photos"}><Plus size={15} /><span>Choose photos</span></button>
+              <input ref={selfiePicker} type="file" hidden accept="image/jpeg,image/png,image/webp" capture="user" onChange={(event) => { addFiles(event.target.files); event.target.value = ""; }} />
               <input ref={picker} type="file" hidden accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => { addFiles(event.target.files); event.target.value = ""; }} />
-              <span className="file-hint">{hasImageConsent ? "JPEG, PNG or WebP · 10 MB each · up to 10" : "Text chat works without photo access"}</span>
+              <span className="file-hint">{hasImageConsent ? `JPEG, PNG or WebP · 10 MB each · up to ${photoPurpose === "fit_check" ? 3 : 10}` : "Text chat works without photo access"}</span>
             </div>
             <button type="button" className="composer-send" disabled={isBusy || (!text.trim() && photos.length === 0)} aria-label="Send message" onClick={() => void handleSend()}>{isBusy ? <LoaderCircle size={16} className="spin" /> : <ArrowUp size={17} />}</button>
           </div>

@@ -4,7 +4,7 @@ import { db, mvpProfiles, mvpThreads, wardrobeUploads } from "@workspace/db";
 import * as api from "@workspace/api-zod";
 import { handler, input, param } from "../lib/mvpHttp";
 import {
-  addMessage, consentFor, itemsFor, messagesFor, MvpError, profileFor, storage,
+  addMessage, consentFor, imageDataFor, itemsFor, messagesFor, MvpError, profileFor, storage,
   threadApi, threadFor, uploadsFor,
 } from "../lib/mvpData";
 import { createScanJob } from "../lib/mvpJobs";
@@ -56,12 +56,29 @@ router.post("/threads/:threadId/messages", handler(async (req, res, userId) => {
   const thread = await threadFor(userId, threadId);
   const data = input(api.SendMvpMessageBody, req.body);
   const paths = data.objectPaths || [];
+  const isFitCheck = data.photoPurpose !== "wardrobe";
+  if (isFitCheck && paths.length > 3) throw new MvpError(400, "Use up to three outfit photos for a quick fit check.");
   if (!data.content.trim() && !paths.length) throw new MvpError(400, "Type a message or attach a clothing photo.");
   if (paths.length) { await consentFor(userId); await uploadsFor(userId, paths); }
-  await addMessage(userId, threadId, "user", data.content.trim() || "Help me add these clothes to my wardrobe.", paths);
+  await addMessage(userId, threadId, "user",
+    data.content.trim() || (isFitCheck ? "How does my outfit look? Give me a quick fit check." : "Help me add these clothes to my wardrobe."),
+    paths, { intent: paths.length && !isFitCheck ? "add_wardrobe" : "chat" });
   if (thread.title === "New conversation") await db.update(mvpThreads).set({
-    title: (data.content.trim() || "Adding clothes to my wardrobe").slice(0, 80),
+    title: (data.content.trim() || (isFitCheck ? "Quick outfit fit check" : "Adding clothes to my wardrobe")).slice(0, 80),
   }).where(and(eq(mvpThreads.id, threadId), eq(mvpThreads.userId, userId)));
+  if (paths.length && isFitCheck) {
+    try {
+      const result = await postToAiService<{ reply: string }>("/fit-check", {
+        images: await imageDataFor(userId, paths), message: data.content.trim(),
+        profile: await profileFor(userId),
+      });
+      const message = await addMessage(userId, threadId, "assistant", result.reply);
+      res.json(api.SendMvpMessageResponse.parse(message));
+      return;
+    } catch (error) {
+      throw new MvpError(502, error instanceof Error ? error.message : "Your fit check could not finish. Please retry.");
+    }
+  }
   if (paths.length) {
     const job = await createScanJob(userId, paths, threadId);
     const message = await addMessage(userId, threadId, "assistant",
@@ -71,13 +88,16 @@ router.post("/threads/:threadId/messages", handler(async (req, res, userId) => {
     return;
   }
   const history = await messagesFor(userId, threadId);
+  const profile = await profileFor(userId);
+  const recentOutfitPhoto = [...history.slice(-12)].reverse().find((m) => m.role === "user" && m.intent === "chat" && m.attachments.length);
   try {
     const result = await postToAiService<{
       reply: string; intent: "chat" | "recommend" | "add_wardrobe";
       suggestedContext: { occasion: string | null; dressCode: string | null; exclusions: string[]; activities: string; outdoor: boolean } | null;
     }>("/assistant", {
       messages: history.slice(-30).map((m) => ({ role: m.role, content: m.content.slice(0, 4000) })),
-      profile: await profileFor(userId), wardrobe: await itemsFor(userId),
+      profile, wardrobe: await itemsFor(userId),
+      images: profile.imageConsent && recentOutfitPhoto ? await imageDataFor(userId, recentOutfitPhoto.attachments.slice(0, 3)) : [],
     });
     const suggestedContext = result.suggestedContext?.occasion && result.suggestedContext?.dressCode
       ? result.suggestedContext : null;

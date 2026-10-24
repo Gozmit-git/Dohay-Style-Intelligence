@@ -1,12 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ListMvpMessagesResponse, SendMvpMessageResponse } from "@workspace/api-zod";
+import { ListMvpMessagesResponse, SendMvpMessageBody, SendMvpMessageResponse } from "@workspace/api-zod";
 
 const message = {
   id: "test-message", threadId: "test-thread", role: "assistant", content: "Hello.",
   attachments: [], jobId: null, outfitIds: [], intent: "chat",
   suggestedContext: null, createdAt: new Date(0).toISOString(),
 };
+test("photo messages default to outfit review; wardrobe scans require explicit choice", () => {
+  const body = { content: "How do I look?", objectPaths: ["/objects/uploads/test"] };
+  assert.equal(SendMvpMessageBody.parse(body).photoPurpose, "fit_check");
+  assert.equal(SendMvpMessageBody.parse({ ...body, photoPurpose: "wardrobe" }).photoPurpose, "wardrobe");
+});
 test("ordinary chat accepts a null outfit context in send and history responses", () => {
   assert.equal(SendMvpMessageResponse.parse(message).suggestedContext, null);
   assert.equal(ListMvpMessagesResponse.parse([message])[0].suggestedContext, null);

@@ -5,10 +5,13 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { SendMvpMessageBodyPhotoPurpose } from './sendMvpMessageBodyPhotoPurpose';
 
 export type SendMvpMessageBody = {
   /** @maxLength 4000 */
   content: string;
   /** @maxItems 10 */
   objectPaths?: string[];
+  /** Review the outfit being worn, or explicitly scan clothing into wardrobe drafts. */
+  photoPurpose?: SendMvpMessageBodyPhotoPurpose;
 };

@@ -532,11 +532,24 @@ export type CreateMvpThreadBody = {
   title?: string;
 };
 
+/**
+ * Review the outfit being worn, or explicitly scan clothing into wardrobe drafts.
+ */
+export type SendMvpMessageBodyPhotoPurpose = typeof SendMvpMessageBodyPhotoPurpose[keyof typeof SendMvpMessageBodyPhotoPurpose];
+
+
+export const SendMvpMessageBodyPhotoPurpose = {
+  fit_check: 'fit_check',
+  wardrobe: 'wardrobe',
+} as const;
+
 export type SendMvpMessageBody = {
   /** @maxLength 4000 */
   content: string;
   /** @maxItems 10 */
   objectPaths?: string[];
+  /** Review the outfit being worn, or explicitly scan clothing into wardrobe drafts. */
+  photoPurpose?: SendMvpMessageBodyPhotoPurpose;
 };
 
 export type RecommendMvpOutfitsBody = {

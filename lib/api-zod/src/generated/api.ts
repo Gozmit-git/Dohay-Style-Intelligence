@@ -812,11 +812,12 @@ export const sendMvpMessageBodyContentMax = 4000;
 
 export const sendMvpMessageBodyObjectPathsMax = 10;
 
-
+export const sendMvpMessageBodyPhotoPurposeDefault = `fit_check`;
 
 export const SendMvpMessageBody = zod.object({
   "content": zod.string().max(sendMvpMessageBodyContentMax),
-  "objectPaths": zod.array(zod.string()).max(sendMvpMessageBodyObjectPathsMax).optional()
+  "objectPaths": zod.array(zod.string()).max(sendMvpMessageBodyObjectPathsMax).optional(),
+  "photoPurpose": zod.enum(['fit_check', 'wardrobe']).default(sendMvpMessageBodyPhotoPurposeDefault).describe('Review the outfit being worn, or explicitly scan clothing into wardrobe drafts.')
 })
 
 export const sendMvpMessageResponseSuggestedContextOneOccasionMax = 180;
