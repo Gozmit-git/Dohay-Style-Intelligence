@@ -271,10 +271,11 @@ function CapturePage() {
       if (file.size > 15 * 1024 * 1024) { setError(`${file.name} is larger than 15 MB.`); continue; }
       valid.push(file);
     }
-    setPhotos((current) => {
-      const combined = [...current, ...valid].slice(0, 5);
-      return combined.map((entry) => entry);
-    });
+    const availableSlots = Math.max(0, 5 - photos.length);
+    const additions: LocalPhoto[] = valid
+      .slice(0, availableSlots)
+      .map((file) => ({ file, preview: URL.createObjectURL(file) }));
+    setPhotos((current) => [...current, ...additions].slice(0, 5));
     if (photos.length + valid.length > 5) setError('You can add up to five photos for one garment.');
   };
   const removePhoto = (index: number) => {

@@ -169,7 +169,7 @@ components:
           maximum: 15728640
         contentType:
           type: string
-          enum: [image/jpeg, image/png, image/webp, image/heic]
+          enum: [image/jpeg, image/png, image/webp]
       required: [name, size, contentType]
     UploadTarget:
       type: object

@@ -8,6 +8,7 @@ import {
   ChatAboutGarmentResponse,
   GetWardrobeSummaryResponse,
   ListWardrobeItemsResponse,
+  ListWardrobeItemsResponseItem,
   RecommendOutfitsBody,
   RecommendOutfitsResponse,
   SaveWardrobeItemBody,
@@ -27,8 +28,6 @@ const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-router.use(requireAuth);
-
 function userIdOr401(req: Request, res: Response): string | null {
   if (!req.userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -38,11 +37,11 @@ function userIdOr401(req: Request, res: Response): string | null {
 }
 
 function asWardrobeItem(row: typeof wardrobeItems.$inferSelect): WardrobeItem {
-  return {
-    ...(row.record as WardrobeItem),
+  return ListWardrobeItemsResponseItem.parse({
+    ...row.record,
     id: row.id,
     createdAt: row.createdAt,
-  } as WardrobeItem;
+  });
 }
 
 async function getOwnedItem(userId: string, id: string) {
@@ -96,6 +95,7 @@ async function getOwnedPhoto(userId: string, objectPath: string) {
 
 router.post(
   "/wardrobe/analyze",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
     const userId = userIdOr401(req, res);
     if (!userId) return;
@@ -128,6 +128,7 @@ router.post(
 
 router.post(
   "/wardrobe/chat",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
     const userId = userIdOr401(req, res);
     if (!userId) return;
@@ -162,6 +163,7 @@ router.post(
 
 router.get(
   "/wardrobe/items",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
     const userId = userIdOr401(req, res);
     if (!userId) return;
@@ -178,6 +180,7 @@ router.get(
 
 router.post(
   "/wardrobe/items",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
     const userId = userIdOr401(req, res);
     if (!userId) return;
@@ -247,6 +250,7 @@ router.post(
 
 router.get(
   "/wardrobe/summary",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
     const userId = userIdOr401(req, res);
     if (!userId) return;
@@ -274,6 +278,7 @@ router.get(
 
 router.post(
   "/wardrobe/recommendations",
+  requireAuth,
   async (req: Request, res: Response): Promise<void> => {
     const userId = userIdOr401(req, res);
     if (!userId) return;

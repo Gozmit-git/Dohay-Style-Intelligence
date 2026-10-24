@@ -1,0 +1,10 @@
+[project]
+name = "dohay-wardrobe-ai"
+version = "0.1.0"
+description = "Private FastAPI service for DOHAY garment analysis and styling"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.162.0",
+    "openai>=3.37.0",
+    "uvicorn>=0.54.0",
+]

@@ -16,7 +16,6 @@ export const UploadRequestContentType = {
   'image/jpeg': 'image/jpeg',
   'image/png': 'image/png',
   'image/webp': 'image/webp',
-  'image/heic': 'image/heic',
 } as const;
 
 export interface UploadRequest {

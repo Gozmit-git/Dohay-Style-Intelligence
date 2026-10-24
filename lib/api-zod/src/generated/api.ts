@@ -29,7 +29,7 @@ export const requestWardrobeUploadUrlBodySizeMax = 15728640;
 export const RequestWardrobeUploadUrlBody = zod.object({
   "name": zod.string().min(1).max(requestWardrobeUploadUrlBodyNameMax),
   "size": zod.number().int().min(1).max(requestWardrobeUploadUrlBodySizeMax),
-  "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp', 'image/heic'])
+  "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
 })
 
 
