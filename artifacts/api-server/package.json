@@ -8,7 +8,8 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:billing": "node tests/run-billing-tests.mjs"
+    "test:billing": "node tests/run-billing-tests.mjs",
+    "test:owner-admin": "node tests/run-owner-admin-tests.mjs"
   },
   "dependencies": {
     "@clerk/express": "^2.1.82",

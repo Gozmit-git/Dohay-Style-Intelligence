@@ -10,6 +10,7 @@ import {
   useSubmitBillingPayment,
 } from "@workspace/api-client-react";
 import qrImage from "../assets/gpay-qr.jpeg";
+import { useOwnerAccess } from "../hooks/use-owner";
 import "./billing.css";
 
 type PlanId = "plus" | "pro";
@@ -26,6 +27,7 @@ function readableDate(value?: string | null) {
 }
 
 export function BillingPage() {
+  const owner = useOwnerAccess();
   const [, setLocation] = useLocation();
   const orderId = new URLSearchParams(window.location.search).get("order") ?? "";
   const catalog = useListBillingPlans();
@@ -202,6 +204,6 @@ export function BillingPage() {
       <button type="button" className="billing-new-order" onClick={() => setLocation("/billing")}>Back to plans <ExternalLink size={13} /></button>
     </section>}
 
-    <div className="billing-owner-link"><Link href="/billing/admin">Payment review for DOHAY owner <ArrowRight size={13} /></Link></div>
+    {owner.isOwner && <div className="billing-owner-link"><Link href="/admin" data-testid="link-billing-owner-dashboard">DOHAY owner dashboard <ArrowRight size={13} /></Link></div>}
   </main>;
 }

@@ -514,6 +514,93 @@ export interface OutfitResponse {
   outfits: Outfit[];
 }
 
+/**
+ * Current entitlement; pending and expired purchases do not grant a paid plan
+ */
+export type OwnerAccountPlan = typeof OwnerAccountPlan[keyof typeof OwnerAccountPlan];
+
+
+export const OwnerAccountPlan = {
+  free: 'free',
+  plus: 'plus',
+  pro: 'pro',
+} as const;
+
+export type OwnerAccountStatus = typeof OwnerAccountStatus[keyof typeof OwnerAccountStatus];
+
+
+export const OwnerAccountStatus = {
+  free: 'free',
+  active: 'active',
+  expired: 'expired',
+  pending: 'pending',
+  rejected: 'rejected',
+} as const;
+
+/**
+ * @nullable
+ */
+export type OwnerAccountPendingPlan = typeof OwnerAccountPendingPlan[keyof typeof OwnerAccountPendingPlan] | null;
+
+
+export const OwnerAccountPendingPlan = {
+  plus: 'plus',
+  pro: 'pro',
+} as const;
+
+export interface OwnerAccount {
+  id: string;
+  name: string;
+  /** @nullable */
+  email: string | null;
+  createdAt: string;
+  /** Current entitlement; pending and expired purchases do not grant a paid plan */
+  plan: OwnerAccountPlan;
+  status: OwnerAccountStatus;
+  /** @nullable */
+  pendingPlan: OwnerAccountPendingPlan;
+  /** @nullable */
+  periodStartsAt: string | null;
+  /** @nullable */
+  periodEndsAt: string | null;
+  /** @nullable */
+  lastPaymentAt: string | null;
+  /** @nullable */
+  billingStatus: string | null;
+}
+
+export interface OwnerAccounts {
+  accounts: OwnerAccount[];
+  total: number;
+  page: number;
+  pageSize: number;
+  asOf: string;
+}
+
+export interface OwnerPlanCounts {
+  free: number;
+  plus: number;
+  pro: number;
+}
+
+export interface OwnerStatusCounts {
+  free: number;
+  active: number;
+  expired: number;
+  pending: number;
+  rejected: number;
+}
+
+export interface OwnerSummary {
+  totalAccounts: number;
+  plans: OwnerPlanCounts;
+  subscriptions: OwnerStatusCounts;
+  pendingPaymentReviews: number;
+  recentSignups: OwnerAccount[];
+  recentBilling: BillingAdminOrder[];
+  asOf: string;
+}
+
 export interface MvpProfileInput {
   /** @maxItems 20 */
   stylePreferences: string[];
@@ -903,6 +990,51 @@ export type BillingConflictResponse = BillingError;
  * Eligibility provider unavailable; no quote issued
  */
 export type BillingUnavailableResponse = BillingError;
+
+export type GetOwnerAccess200 = {
+  isOwner: boolean;
+};
+
+export type ListOwnerAccountsParams = {
+/**
+ * @maxLength 100
+ */
+search?: string;
+plan?: ListOwnerAccountsPlan;
+status?: ListOwnerAccountsStatus;
+/**
+ * @minimum 1
+ * @maximum 10000
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+pageSize?: number;
+};
+
+export type ListOwnerAccountsPlan = typeof ListOwnerAccountsPlan[keyof typeof ListOwnerAccountsPlan];
+
+
+export const ListOwnerAccountsPlan = {
+  all: 'all',
+  free: 'free',
+  plus: 'plus',
+  pro: 'pro',
+} as const;
+
+export type ListOwnerAccountsStatus = typeof ListOwnerAccountsStatus[keyof typeof ListOwnerAccountsStatus];
+
+
+export const ListOwnerAccountsStatus = {
+  all: 'all',
+  free: 'free',
+  active: 'active',
+  expired: 'expired',
+  pending: 'pending',
+  rejected: 'rejected',
+} as const;
 
 export type CreateMvpUploadBodyContentType = typeof CreateMvpUploadBodyContentType[keyof typeof CreateMvpUploadBodyContentType];
 

@@ -8,6 +8,112 @@
 import * as zod from 'zod';
 
 
+export const GetOwnerAccessResponse = zod.object({
+  "isOwner": zod.boolean()
+})
+
+
+export const getOwnerSummaryResponseRecentBillingItemOneFirstTermAmountMin = 0;
+
+export const getOwnerSummaryResponseRecentBillingItemOneRegularAmountMin = 0;
+
+export const getOwnerSummaryResponseRecentBillingItemOneTransactionReferenceMax = 80;
+
+
+
+export const GetOwnerSummaryResponse = zod.object({
+  "totalAccounts": zod.number().int(),
+  "plans": zod.object({
+  "free": zod.number().int(),
+  "plus": zod.number().int(),
+  "pro": zod.number().int()
+}),
+  "subscriptions": zod.object({
+  "free": zod.number().int(),
+  "active": zod.number().int(),
+  "expired": zod.number().int(),
+  "pending": zod.number().int(),
+  "rejected": zod.number().int()
+}),
+  "pendingPaymentReviews": zod.number().int(),
+  "recentSignups": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "email": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "plan": zod.enum(['free', 'plus', 'pro']).describe('Current entitlement; pending and expired purchases do not grant a paid plan'),
+  "status": zod.enum(['free', 'active', 'expired', 'pending', 'rejected']),
+  "pendingPlan": zod.union([zod.literal('plus'),zod.literal('pro'),zod.literal(null)]).nullable(),
+  "periodStartsAt": zod.string().nullable(),
+  "periodEndsAt": zod.string().nullable(),
+  "lastPaymentAt": zod.string().nullable(),
+  "billingStatus": zod.string().nullable()
+})),
+  "recentBilling": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "quoteId": zod.string().uuid(),
+  "plan": zod.enum(['plus', 'pro']),
+  "interval": zod.enum(['month', 'year']),
+  "currency": zod.enum(['INR']),
+  "amountUnit": zod.enum(['paise']),
+  "firstTermAmount": zod.number().int().min(getOwnerSummaryResponseRecentBillingItemOneFirstTermAmountMin),
+  "regularAmount": zod.number().int().min(getOwnerSummaryResponseRecentBillingItemOneRegularAmountMin),
+  "discountPercent": zod.union([zod.literal(0),zod.literal(70)]),
+  "status": zod.enum(['awaiting_payment', 'pending_review', 'approved', 'rejected']),
+  "transactionReference": zod.string().max(getOwnerSummaryResponseRecentBillingItemOneTransactionReferenceMax).nullable(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "periodStartsAt": zod.coerce.date().nullable(),
+  "periodEndsAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date()
+}).and(zod.object({
+  "userId": zod.string()
+}))),
+  "asOf": zod.string()
+})
+
+
+export const listOwnerAccountsQuerySearchMax = 100;
+
+export const listOwnerAccountsQueryPlanDefault = `all`;
+export const listOwnerAccountsQueryStatusDefault = `all`;
+export const listOwnerAccountsQueryPageDefault = 1;
+export const listOwnerAccountsQueryPageMax = 10000;
+
+export const listOwnerAccountsQueryPageSizeDefault = 20;
+export const listOwnerAccountsQueryPageSizeMax = 100;
+
+
+
+export const ListOwnerAccountsQueryParams = zod.object({
+  "search": zod.coerce.string().max(listOwnerAccountsQuerySearchMax).optional(),
+  "plan": zod.enum(['all', 'free', 'plus', 'pro']).default(listOwnerAccountsQueryPlanDefault),
+  "status": zod.enum(['all', 'free', 'active', 'expired', 'pending', 'rejected']).default(listOwnerAccountsQueryStatusDefault),
+  "page": zod.coerce.number().int().min(1).max(listOwnerAccountsQueryPageMax).default(listOwnerAccountsQueryPageDefault),
+  "pageSize": zod.coerce.number().int().min(1).max(listOwnerAccountsQueryPageSizeMax).default(listOwnerAccountsQueryPageSizeDefault)
+})
+
+export const ListOwnerAccountsResponse = zod.object({
+  "accounts": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "email": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "plan": zod.enum(['free', 'plus', 'pro']).describe('Current entitlement; pending and expired purchases do not grant a paid plan'),
+  "status": zod.enum(['free', 'active', 'expired', 'pending', 'rejected']),
+  "pendingPlan": zod.union([zod.literal('plus'),zod.literal('pro'),zod.literal(null)]).nullable(),
+  "periodStartsAt": zod.string().nullable(),
+  "periodEndsAt": zod.string().nullable(),
+  "lastPaymentAt": zod.string().nullable(),
+  "billingStatus": zod.string().nullable()
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int(),
+  "asOf": zod.string()
+})
+
+
 /**
  * @summary Pricing in paise; planned limits are not yet enforced
  */

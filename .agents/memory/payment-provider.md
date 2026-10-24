@@ -3,17 +3,17 @@ name: Payment provider requirement
 description: User's required payment provider for DOHAY.
 ---
 
-Pine Labs is required for payment integration.
+The user replaced the Pine Labs requirement with their GPay QR for the MVP on 2026-10-24.
 
-Payments are for a recurring DOHAY subscription, not one-time purchases.
+Payments purchase DOHAY subscription periods; a static QR does not enable automatic recurring charges.
 
 The user delegated pricing and free-versus-paid feature decisions, with a firm
 requirement that the first 20 users receive 70% off whichever option they choose.
 Do not reinterpret this cohort as the first 20 paying customers without approval.
 
-**Why:** The user explicitly chose to keep Pine Labs after being offered Stripe and Whop alternatives, and selected recurring subscriptions as the billing model.
+**Why:** The user explicitly said not to use Pine Labs and supplied a GPay QR because this is an MVP.
 
-**How to apply:** Do not substitute another payment gateway without explicit approval. Confirm the applicable Pine Labs product and its official integration documentation before implementing payments.
+**How to apply:** Preserve manual verification against actual transfers before granting a paid period. Do not infer success from clicking “paid,” a submitted reference, or a generic agent run. Obtain approval before introducing another gateway.
 
 AgenticOrg hackathon access is not evidence of Plural subscription access.
 

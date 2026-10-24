@@ -11,6 +11,8 @@ import {
   orderApi, ownedOrder, ownedQuote, quoteApi, reviewBillingOrder, submitBillingPayment,
 } from "../lib/billingData";
 import { MvpError } from "../lib/mvpData";
+import { isVerifiedOwner } from "../lib/ownerAccountModel";
+import { ownerAdminRouter } from "./ownerAdmin";
 
 const router = Router();
 router.use((_req, res, next) => { res.setHeader("Cache-Control", "no-store"); next(); });
@@ -114,12 +116,12 @@ async function requireBillingAdmin(userId: string) {
   } catch {
     throw new MvpError(503, "The billing owner account could not be verified. Retry shortly.");
   }
-  const primary = user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId);
-  if (!primary || primary.verification?.status !== "verified" ||
-      primary.emailAddress.trim().toLowerCase() !== configuredEmail) {
+  if (!isVerifiedOwner(user, configuredEmail)) {
     throw new MvpError(403, "This account is not authorized to review payments.");
   }
 }
+
+router.use("/admin", ownerAdminRouter(requireBillingAdmin));
 
 router.get("/admin/orders", handler(async (_req, res, userId) => {
   await requireBillingAdmin(userId);

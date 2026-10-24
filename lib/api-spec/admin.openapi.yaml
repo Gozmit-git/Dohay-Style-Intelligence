@@ -1,0 +1,100 @@
+openapi: 3.1.0
+info: { title: Owner dashboard, version: 1.0.0 }
+paths:
+  /billing/admin/access:
+    get:
+      operationId: getOwnerAccess
+      responses:
+        "200":
+          description: Server-verified owner access, no account data
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [isOwner]
+                properties:
+                  isOwner: { type: boolean }
+  /billing/admin/summary:
+    get:
+      operationId: getOwnerSummary
+      responses:
+        "200":
+          description: Verified owner only; live account and billing summary
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OwnerSummary" }
+        "401": { description: Sign in required }
+        "403": { description: Verified owner required }
+        "503": { description: Live service unavailable }
+  /billing/admin/accounts:
+    get:
+      operationId: listOwnerAccounts
+      parameters:
+        - { in: query, name: search, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: plan, schema: { type: string, enum: [all, free, plus, pro], default: all } }
+        - { in: query, name: status, schema: { type: string, enum: [all, free, active, expired, pending, rejected], default: all } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1, maximum: 10000, default: 1 } }
+        - { in: query, name: pageSize, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200":
+          description: Verified owner only; filtered newest-first accounts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OwnerAccounts" }
+        "400": { description: Invalid filters }
+        "401": { description: Sign in required }
+        "403": { description: Verified owner required }
+        "503": { description: Live service unavailable }
+components:
+  schemas:
+    OwnerAccount:
+      type: object
+      required: [id, name, email, createdAt, plan, status, pendingPlan, periodStartsAt, periodEndsAt, lastPaymentAt, billingStatus]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: ["string", "null"] }
+        createdAt: { type: string }
+        plan: { type: string, enum: [free, plus, pro], description: Current entitlement; pending and expired purchases do not grant a paid plan }
+        status: { type: string, enum: [free, active, expired, pending, rejected] }
+        pendingPlan: { type: ["string", "null"], enum: [plus, pro, null] }
+        periodStartsAt: { type: ["string", "null"] }
+        periodEndsAt: { type: ["string", "null"] }
+        lastPaymentAt: { type: ["string", "null"] }
+        billingStatus: { type: ["string", "null"] }
+    OwnerAccounts:
+      type: object
+      required: [accounts, total, page, pageSize, asOf]
+      properties:
+        accounts: { type: array, items: { $ref: "#/components/schemas/OwnerAccount" } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        asOf: { type: string }
+    OwnerPlanCounts:
+      type: object
+      required: [free, plus, pro]
+      properties:
+        free: { type: integer }
+        plus: { type: integer }
+        pro: { type: integer }
+    OwnerStatusCounts:
+      type: object
+      required: [free, active, expired, pending, rejected]
+      properties:
+        free: { type: integer }
+        active: { type: integer }
+        expired: { type: integer }
+        pending: { type: integer }
+        rejected: { type: integer }
+    OwnerSummary:
+      type: object
+      required: [totalAccounts, plans, subscriptions, pendingPaymentReviews, recentSignups, recentBilling, asOf]
+      properties:
+        totalAccounts: { type: integer }
+        plans: { $ref: "#/components/schemas/OwnerPlanCounts" }
+        subscriptions: { $ref: "#/components/schemas/OwnerStatusCounts" }
+        pendingPaymentReviews: { type: integer }
+        recentSignups: { type: array, items: { $ref: "#/components/schemas/OwnerAccount" } }
+        recentBilling: { type: array, items: { $ref: "./openapi.yaml#/components/schemas/BillingAdminOrder" } }
+        asOf: { type: string }

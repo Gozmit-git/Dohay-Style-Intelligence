@@ -17,6 +17,12 @@ tags:
   - name: storage
     description: Private image upload support
 paths:
+  /billing/admin/access:
+    $ref: "./admin.openapi.yaml#/paths/~1billing~1admin~1access"
+  /billing/admin/summary:
+    $ref: "./admin.openapi.yaml#/paths/~1billing~1admin~1summary"
+  /billing/admin/accounts:
+    $ref: "./admin.openapi.yaml#/paths/~1billing~1admin~1accounts"
   /billing/plans:
     get:
       operationId: listBillingPlans

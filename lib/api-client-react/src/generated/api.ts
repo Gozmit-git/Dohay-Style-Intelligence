@@ -51,7 +51,9 @@ import type {
   GarmentAnalysisInput,
   GarmentChatInput,
   GarmentChatReply,
+  GetOwnerAccess200,
   HealthStatus,
+  ListOwnerAccountsParams,
   MvpAttributes,
   MvpItem,
   MvpJob,
@@ -63,6 +65,8 @@ import type {
   MvpThread,
   OutfitRequest,
   OutfitResponse,
+  OwnerAccounts,
+  OwnerSummary,
   RecommendMvpOutfits200,
   RecommendMvpOutfitsBody,
   RecordMvpOutfitFeedbackBody,
@@ -102,6 +106,298 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetOwnerAccessUrl = () => {
+
+
+
+
+  return `/api/billing/admin/access`
+}
+
+export const getOwnerAccess = async ( options?: Parameters<typeof customFetch>[1]): Promise<GetOwnerAccess200> => {
+
+  return customFetch<GetOwnerAccess200>(getGetOwnerAccessUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOwnerAccessQueryKey = () => {
+    return [
+    `/api/billing/admin/access`
+    ] as const;
+    }
+
+
+export const getGetOwnerAccessQueryOptions = <TData = Awaited<ReturnType<typeof getOwnerAccess>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerAccess>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOwnerAccessQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOwnerAccess>>> = ({ signal }) => getOwnerAccess({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOwnerAccess>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOwnerAccessQueryResult = NonNullable<Awaited<ReturnType<typeof getOwnerAccess>>>
+export type GetOwnerAccessQueryError = ErrorType<unknown>
+
+
+export function useGetOwnerAccess<TData = Awaited<ReturnType<typeof getOwnerAccess>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerAccess>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOwnerAccess>>,
+          TError,
+          Awaited<ReturnType<typeof getOwnerAccess>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOwnerAccess<TData = Awaited<ReturnType<typeof getOwnerAccess>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerAccess>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOwnerAccess>>,
+          TError,
+          Awaited<ReturnType<typeof getOwnerAccess>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOwnerAccess<TData = Awaited<ReturnType<typeof getOwnerAccess>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerAccess>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetOwnerAccess<TData = Awaited<ReturnType<typeof getOwnerAccess>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerAccess>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOwnerAccessQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetOwnerSummaryUrl = () => {
+
+
+
+
+  return `/api/billing/admin/summary`
+}
+
+export const getOwnerSummary = async ( options?: Parameters<typeof customFetch>[1]): Promise<OwnerSummary> => {
+
+  return customFetch<OwnerSummary>(getGetOwnerSummaryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOwnerSummaryQueryKey = () => {
+    return [
+    `/api/billing/admin/summary`
+    ] as const;
+    }
+
+
+export const getGetOwnerSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getOwnerSummary>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSummary>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOwnerSummaryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOwnerSummary>>> = ({ signal }) => getOwnerSummary({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOwnerSummary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOwnerSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getOwnerSummary>>>
+export type GetOwnerSummaryQueryError = ErrorType<void>
+
+
+export function useGetOwnerSummary<TData = Awaited<ReturnType<typeof getOwnerSummary>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSummary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOwnerSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getOwnerSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOwnerSummary<TData = Awaited<ReturnType<typeof getOwnerSummary>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSummary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOwnerSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getOwnerSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOwnerSummary<TData = Awaited<ReturnType<typeof getOwnerSummary>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSummary>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetOwnerSummary<TData = Awaited<ReturnType<typeof getOwnerSummary>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSummary>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOwnerSummaryQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListOwnerAccountsUrl = (params?: ListOwnerAccountsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/billing/admin/accounts?${stringifiedParams}` : `/api/billing/admin/accounts`
+}
+
+export const listOwnerAccounts = async (params?: ListOwnerAccountsParams, options?: Parameters<typeof customFetch>[1]): Promise<OwnerAccounts> => {
+
+  return customFetch<OwnerAccounts>(getListOwnerAccountsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListOwnerAccountsQueryKey = (params?: ListOwnerAccountsParams,) => {
+    return [
+    `/api/billing/admin/accounts`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListOwnerAccountsQueryOptions = <TData = Awaited<ReturnType<typeof listOwnerAccounts>>, TError = ErrorType<void>>(params?: ListOwnerAccountsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOwnerAccounts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOwnerAccountsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOwnerAccounts>>> = ({ signal }) => listOwnerAccounts(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOwnerAccounts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOwnerAccountsQueryResult = NonNullable<Awaited<ReturnType<typeof listOwnerAccounts>>>
+export type ListOwnerAccountsQueryError = ErrorType<void>
+
+
+export function useListOwnerAccounts<TData = Awaited<ReturnType<typeof listOwnerAccounts>>, TError = ErrorType<void>>(
+ params: undefined |  ListOwnerAccountsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOwnerAccounts>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOwnerAccounts>>,
+          TError,
+          Awaited<ReturnType<typeof listOwnerAccounts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOwnerAccounts<TData = Awaited<ReturnType<typeof listOwnerAccounts>>, TError = ErrorType<void>>(
+ params?: ListOwnerAccountsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOwnerAccounts>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOwnerAccounts>>,
+          TError,
+          Awaited<ReturnType<typeof listOwnerAccounts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOwnerAccounts<TData = Awaited<ReturnType<typeof listOwnerAccounts>>, TError = ErrorType<void>>(
+ params?: ListOwnerAccountsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOwnerAccounts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListOwnerAccounts<TData = Awaited<ReturnType<typeof listOwnerAccounts>>, TError = ErrorType<void>>(
+ params?: ListOwnerAccountsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOwnerAccounts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOwnerAccountsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListBillingPlansUrl = () => {
 
